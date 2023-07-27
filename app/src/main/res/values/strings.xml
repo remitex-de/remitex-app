@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">RemitexApp</string>
+    <string name="title_activity_containererfassung">ContainerErfassungActivity</string>
+    <string name="title_activity_export">ExportActivity</string>
+    <string name="tagSpinner_prompt">Datum filtern:</string>
+    <string name="fahrernummerSpinner_prompt">Fahrernummer filtern:</string>
+    <string name="ToolbarTitle">Container App</string>
+    <string name="ToolbarLogo">Remitex-Logo</string>
+    <string name="ExportTitle">Daten Transfer</string>
+    <string name="ExportButtonExport">Export</string>
+    <string name="ExportBackButton">Zurück</string>
+    <string name="FahrernummerTitle">Fahrer anmelden</string>
+    <string name="fahrernummerhint">Fahrernummer</string>
+    <string name="fahrernummeranmeldenbutton">Anmelden</string>
+    <string name="fahrernummerdatentransferbutton">Daten Transfer</string>
+    <string name="erfassungfuellmengen_erfassen">Füllmengen erfassen</string>
+    <string name="erfassencontainernummerhint">Containernummer</string>
+    <string name="erfassenbarcode_scannenbutton">Barcode scannen</string>
+    <string name="erfassenabbrechenbutton">Abbrechen</string>
+    <string name="erfassenfuellmenge_in_prozenthint">Füllmenge in Prozent</string>
+    <string name="erfassenerfassenbutton">Erfassen</string>
+    <string name="erfassenerfassung_beendenbutton">Erfassung beenden</string>
+</resources>

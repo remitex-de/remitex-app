@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "178506238465",
+    "project_id": "remitexapp",
+    "storage_bucket": "remitexapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:178506238465:android:a6fb95756ce3f744a60e00",
+        "android_client_info": {
+          "package_name": "com.example.remitexapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "178506238465-7vsluf8pcak9aakeplopst0qrc7112ju.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbE3bll9EPx1AUd2z7dx51VD5ylsB2XaM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "178506238465-7vsluf8pcak9aakeplopst0qrc7112ju.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

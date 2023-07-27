@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            android:src="@drawable/remitexlogo"
+            android:layout_gravity="end"
+            android:contentDescription="@string/ToolbarLogo"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ToolbarTitle"
+            android:textColor="@android:color/black"
+            android:textSize="28sp"
+            android:layout_marginStart="18dp"
+            android:textStyle="bold"/>
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ExportTitle"
+            android:textColor="@android:color/black"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingStart="3dp"
+            android:paddingEnd="3dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/fahrernummerSpinner_prompt"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingStart="3dp"
+            android:paddingEnd="3dp"
+            android:layout_marginTop="20dp"/>
+
+        <Spinner
+            android:id="@+id/fahrernummerSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:prompt="@string/fahrernummerSpinner_prompt" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tagSpinner_prompt"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingStart="3dp"
+            android:paddingEnd="3dp"
+            android:layout_marginTop="20dp"/>
+
+        <Spinner
+            android:id="@+id/tagSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:prompt="@string/tagSpinner_prompt" />
+
+        <Button
+            android:id="@+id/buttonTransferExport"
+            style="@android:style/Widget.DeviceDefault.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="25sp"
+            android:backgroundTint="@color/blue"
+            android:text="@string/ExportButtonExport"
+            android:layout_marginTop="20dp"/>
+
+        <Button
+            android:id="@+id/buttonTransferZurueck"
+            style="@android:style/Widget.DeviceDefault.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="25sp"
+            android:backgroundTint="@color/blue"
+            android:text="@string/ExportBackButton" />
+
+    </LinearLayout>
+</LinearLayout>

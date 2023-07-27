@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/toolbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="100dp">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            android:src="@drawable/remitexlogo"
+            android:layout_gravity="end"
+            android:contentDescription="@string/ToolbarLogo" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ToolbarTitle"
+            android:textColor="@android:color/black"
+            android:textSize="28sp"
+            android:layout_marginStart="18dp"
+            android:textStyle="bold"/>
+
+    </androidx.appcompat.widget.Toolbar>
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/toolbar_container"
+        android:layout_above="@+id/buttonAbmelden"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/erfassungfuellmengen_erfassen"
+            android:textColor="@android:color/black"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"/>
+
+        <EditText
+            android:id="@+id/editTextContainernummer"
+            android:layout_width="180dp"
+            android:layout_height="58dp"
+            android:hint="@string/erfassencontainernummerhint"
+            android:inputType="number"
+            android:autofillHints="" />
+
+        <Button
+            android:id="@+id/scanBarcodeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/erfassenbarcode_scannenbutton" />
+
+        <Button
+            android:id="@+id/cancelScanButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/erfassenabbrechenbutton"
+            android:visibility="gone" />
+
+        <com.journeyapps.barcodescanner.BarcodeView
+            android:id="@+id/barcode_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/editTextFuellmenge"
+            android:layout_width="180dp"
+            android:layout_height="58dp"
+            android:hint="@string/erfassenfuellmenge_in_prozenthint"
+            android:inputType="number"
+            android:autofillHints="" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/button0"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:text="0"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button25"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:text="25"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button50"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:text="50"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button75"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:text="75"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button100"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:text="100"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button120"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:text="120"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/buttonErfassen"
+            style="@android:style/Widget.DeviceDefault.Button.Colored"
+            android:layout_width="154dp"
+            android:layout_height="60dp"
+            android:textSize="18sp"
+            android:backgroundTint="@color/blue"
+            android:text="@string/erfassenerfassenbutton" />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/buttonAbmelden"
+        style="@android:style/Widget.DeviceDefault.Button.Colored"
+        android:layout_width="175dp"
+        android:layout_height="60dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:backgroundTint="@color/blue"
+        android:text="@string/erfassenerfassung_beendenbutton"
+        tools:ignore="TextSizeCheck" />
+
+    <TextView
+        android:id="@+id/toolbar_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/blue"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
+</RelativeLayout>

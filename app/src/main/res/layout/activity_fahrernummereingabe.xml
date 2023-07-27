@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            android:src="@drawable/remitexlogo"
+            android:layout_gravity="end"
+            android:contentDescription="@string/ToolbarLogo"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ToolbarTitle"
+            android:textColor="@android:color/black"
+            android:textSize="28sp"
+            android:layout_marginStart="18dp"
+            android:textStyle="bold"/>
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/FahrernummerTitle"
+            android:textColor="@android:color/black"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingStart="3dp"
+            android:paddingEnd="3dp"/>
+
+        <EditText
+            android:id="@+id/editTextFahrernummer"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:hint="@string/fahrernummerhint"
+            android:inputType="number"
+            android:autofillHints="" />
+
+        <!-- Für Passwort Abfrage
+        <EditText
+            android:id="@+id/editTextPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Passwort eingeben"
+            android:inputType="textPassword" />
+            -->
+        <Button
+            android:id="@+id/buttonbestaetigen"
+            style="@android:style/Widget.DeviceDefault.Button.Colored"
+            android:layout_width="154dp"
+            android:layout_height="75dp"
+            android:text="@string/fahrernummeranmeldenbutton"
+            android:textSize="18sp"
+            android:backgroundTint="@color/blue"/>
+        <Button
+            android:id="@+id/buttonTransferDaten"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/fahrernummerdatentransferbutton" />
+
+
+    </LinearLayout>
+</LinearLayout>
