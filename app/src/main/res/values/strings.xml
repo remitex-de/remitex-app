@@ -20,4 +20,5 @@
     <string name="erfassenfuellmenge_in_prozenthint">Füllmenge in Prozent</string>
     <string name="erfassenerfassenbutton">Erfassen</string>
     <string name="erfassenerfassung_beendenbutton">Erfassung beenden</string>
+    <string name="erfassenlichtbutton">Licht</string>
 </resources>

@@ -55,6 +55,11 @@
             android:paddingStart="4dp"
             android:paddingEnd="4dp"/>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
         <EditText
             android:id="@+id/editTextContainernummer"
             android:layout_width="180dp"
@@ -69,12 +74,31 @@
             android:layout_height="wrap_content"
             android:text="@string/erfassenbarcode_scannenbutton" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal">
+
+        <Button
+            android:id="@+id/lightButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/erfassenlichtbutton"
+            android:visibility="gone"
+            tools:ignore="ButtonStyle" />
+
         <Button
             android:id="@+id/cancelScanButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/erfassenabbrechenbutton"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:ignore="ButtonStyle" />
+
+    </LinearLayout>
 
         <com.journeyapps.barcodescanner.BarcodeView
             android:id="@+id/barcode_view"

@@ -46,12 +46,13 @@ class ContainerErfassungActivity : AppCompatActivity() {
             )
         }
         containernummerInput = findViewById(R.id.editTextContainernummer)
+        val fahrernummer = intent.getStringExtra("fahrernummer")
         val fuellmengeInput = findViewById<EditText>(R.id.editTextFuellmenge)
         val erfassenButton = findViewById<Button>(R.id.buttonErfassen)
         val abmeldenButton = findViewById<Button>(R.id.buttonAbmelden)
         val scanBarcodeButton = findViewById<Button>(R.id.scanBarcodeButton)
-        val fahrernummer = intent.getStringExtra("fahrernummer")
         val cancelScanButton = findViewById<Button>(R.id.cancelScanButton)
+        val lightButton = findViewById<Button>(R.id.lightButton)
         val button0 = findViewById<Button>(R.id.button0)
         val button25 = findViewById<Button>(R.id.button25)
         val button50 = findViewById<Button>(R.id.button50)
@@ -59,19 +60,33 @@ class ContainerErfassungActivity : AppCompatActivity() {
         val button100 = findViewById<Button>(R.id.button100)
         val button120 = findViewById<Button>(R.id.button120)
         barcodeView = findViewById(R.id.barcode_view)
+        var isFlashOn = false
+
+        lightButton.setOnClickListener {
+            isFlashOn = !isFlashOn
+            barcodeView.setTorch(isFlashOn)
+        }
 
         cancelScanButton.setOnClickListener {
             barcodeView.visibility = View.GONE
             cancelScanButton.visibility = View.GONE
+            lightButton.visibility = View.GONE
+            if (isFlashOn) {
+                isFlashOn = false
+                barcodeView.setTorch(false)
+            }
         }
 
         scanBarcodeButton.setOnClickListener {
             barcodeView.visibility = View.VISIBLE
             cancelScanButton.visibility = View.VISIBLE
+            lightButton.visibility = View.VISIBLE
+
             barcodeView.decodeSingle(object : BarcodeCallback {
                 override fun barcodeResult(result: BarcodeResult) {
                     barcodeView.visibility = View.GONE
                     cancelScanButton.visibility = View.GONE
+                    lightButton.visibility = View.GONE
                     containernummerInput.setText(result.text)
 
                     // Setzen Sie den Fokus auf fuellmengeInput und verhindern Sie die automatische Öffnung der Tastatur
