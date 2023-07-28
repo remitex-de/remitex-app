@@ -112,6 +112,14 @@ class ContainerErfassungActivity : AppCompatActivity() {
         button120.setOnClickListener(buttonClickListener)
 
         erfassenButton.setOnClickListener {
+
+            // Überprüfen, ob beide Felder ausgefüllt sind
+            if (containernummerInput.text.isNullOrEmpty() || fuellmengeInput.text.isNullOrEmpty()) {
+                // Wenn nicht, zeigen Sie eine Nachricht an und kehren Sie zurück
+                showMessageInToolbar("Beide Felder müssen ausgefüllt sein!")
+                return@setOnClickListener
+            }
+
             val fuellmenge = fuellmengeInput.text.toString().toIntOrNull() ?: 0
             val containernummer = containernummerInput.text.toString().toIntOrNull() ?: 0
             val currentDateTime = LocalDateTime.now()
