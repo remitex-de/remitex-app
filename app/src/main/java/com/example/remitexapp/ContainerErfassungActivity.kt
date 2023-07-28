@@ -51,7 +51,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
         val erfassenButton = findViewById<Button>(R.id.buttonErfassen)
         val abmeldenButton = findViewById<Button>(R.id.buttonAbmelden)
         val scanBarcodeButton = findViewById<Button>(R.id.scanBarcodeButton)
-        val cancelScanButton = findViewById<Button>(R.id.cancelScanButton)
         val lightButton = findViewById<Button>(R.id.lightButton)
         val button0 = findViewById<Button>(R.id.button0)
         val button25 = findViewById<Button>(R.id.button25)
@@ -67,37 +66,38 @@ class ContainerErfassungActivity : AppCompatActivity() {
             barcodeView.setTorch(isFlashOn)
         }
 
-        cancelScanButton.setOnClickListener {
-            barcodeView.visibility = View.GONE
-            cancelScanButton.visibility = View.GONE
-            lightButton.visibility = View.GONE
-            if (isFlashOn) {
-                isFlashOn = false
-                barcodeView.setTorch(false)
+        scanBarcodeButton.setOnClickListener {
+            // Überprüfen Sie, ob die BarcodeView sichtbar ist
+            if (barcodeView.visibility == View.VISIBLE) {
+                // Wenn die BarcodeView sichtbar ist, setzen Sie sie und alle zugehörigen Elemente auf unsichtbar
+                barcodeView.visibility = View.GONE
+                lightButton.visibility = View.GONE
+                if (isFlashOn) {
+                    isFlashOn = false
+                    barcodeView.setTorch(false)
+                }
+            } else {
+                // Wenn die BarcodeView nicht sichtbar ist, machen Sie sie und alle zugehörigen Elemente sichtbar
+                barcodeView.visibility = View.VISIBLE
+                lightButton.visibility = View.VISIBLE
+
+                barcodeView.decodeSingle(object : BarcodeCallback {
+                    override fun barcodeResult(result: BarcodeResult) {
+                        barcodeView.visibility = View.GONE
+                        lightButton.visibility = View.GONE
+                        containernummerInput.setText(result.text)
+
+                        // Setzen Sie den Fokus auf fuellmengeInput und verhindern Sie die automatische Öffnung der Tastatur
+                        fuellmengeInput.requestFocus()
+                        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        imm.hideSoftInputFromWindow(fuellmengeInput.windowToken, 0)
+                    }
+
+                    override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {}
+                })
             }
         }
 
-        scanBarcodeButton.setOnClickListener {
-            barcodeView.visibility = View.VISIBLE
-            cancelScanButton.visibility = View.VISIBLE
-            lightButton.visibility = View.VISIBLE
-
-            barcodeView.decodeSingle(object : BarcodeCallback {
-                override fun barcodeResult(result: BarcodeResult) {
-                    barcodeView.visibility = View.GONE
-                    cancelScanButton.visibility = View.GONE
-                    lightButton.visibility = View.GONE
-                    containernummerInput.setText(result.text)
-
-                    // Setzen Sie den Fokus auf fuellmengeInput und verhindern Sie die automatische Öffnung der Tastatur
-                    fuellmengeInput.requestFocus()
-                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    imm.hideSoftInputFromWindow(fuellmengeInput.windowToken, 0)
-                }
-
-                override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {}
-            })
-        }
 
         val buttonClickListener = View.OnClickListener { view ->
             val button = view as Button
