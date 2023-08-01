@@ -2,20 +2,31 @@ package com.example.remitexapp
 
 import DatabaseHelper
 import android.content.ContentValues
-import android.graphics.Color
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class ExportActivity : AppCompatActivity() {
 
     private lateinit var db: DatabaseHelper
+    private val scope = CoroutineScope(Dispatchers.IO + Job())
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +52,10 @@ class ExportActivity : AppCompatActivity() {
             val fahrernummer = fahrernummerSpinner.selectedItem as String
             val tag = tagSpinner.selectedItem as String
             val data = db.getSelectedData(fahrernummer, tag)
-            exportDataToFile(data)
+            val uri = exportDataToFile(data)
+            uri?.let {
+                sendEmailWithAttachment(uri)
+            }
         }
 
         val buttonTransferZurueck = findViewById<Button>(R.id.buttonTransferZurueck)
@@ -50,7 +64,7 @@ class ExportActivity : AppCompatActivity() {
         }
     }
 
-    private fun exportDataToFile(data: List<Array<String>>) {
+    private fun exportDataToFile(data: List<Array<String>>): Uri? {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val fileName = "export_$timeStamp.txt"
 
@@ -73,18 +87,39 @@ class ExportActivity : AppCompatActivity() {
             contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
             resolver.update(uri, contentValues, null, null)
 
-            showSnackbar("Daten erfolgreich exportiert nach $fileName.")
+            showMessageInToolbar("Daten erfolgreich exportiert nach $fileName.")
         } ?: run {
-            showSnackbar("Fehler beim Exportieren der Daten.")
+            showMessageInToolbar("Fehler beim Exportieren der Daten.")
         }
+        return uri
     }
 
-    private fun showSnackbar(message: String) {
-        val rootView = window.decorView.rootView
-        Snackbar.make(rootView, message, Snackbar.LENGTH_SHORT).apply {
-            setBackgroundTint(Color.BLUE)  // Hintergrundfarbe
-            setTextColor(Color.WHITE)  // Textfarbe
-            show()
+    fun sendEmailWithAttachment(uri: Uri) {
+        val emailIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "vnd.android.cursor.dir/email"
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("m.mischon@remitex.de"))
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, "Scan-Datenexport")
         }
+
+        startActivity(Intent.createChooser(emailIntent, "Senden Sie E-Mail..."))
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel() // Coroutine-Scope wird abgebrochen, wenn die Activity zerstört wird
+    }
+
+    private fun showMessageInToolbar(message: String, onMessageHidden: (() -> Unit)? = null) {
+        val toolbarMessage: TextView = findViewById(R.id.toolbar_message)
+        toolbarMessage.text = message
+        toolbarMessage.visibility = View.VISIBLE
+
+        // Meldung nach einigen Sekunden wieder ausblenden
+        Handler(Looper.getMainLooper()).postDelayed({
+            toolbarMessage.visibility = View.GONE
+            onMessageHidden?.invoke()
+        }, 2000)
     }
 }

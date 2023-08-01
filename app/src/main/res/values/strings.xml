@@ -7,7 +7,7 @@
     <string name="ToolbarTitle">Container App</string>
     <string name="ToolbarLogo">Remitex-Logo</string>
     <string name="ExportTitle">Daten Transfer</string>
-    <string name="ExportButtonExport">Export</string>
+    <string name="ExportButtonExport">Export und Senden</string>
     <string name="ExportBackButton">Zurück</string>
     <string name="FahrernummerTitle">Fahrer anmelden</string>
     <string name="fahrernummerhint">Fahrernummer</string>
@@ -21,4 +21,5 @@
     <string name="erfassenerfassenbutton">Erfassen</string>
     <string name="erfassenerfassung_beendenbutton">Erfassung beenden</string>
     <string name="erfassenlichtbutton">Licht</string>
+    <string name="title_activity_secure_preferences_helper">SecurePreferencesHelper</string>
 </resources>
