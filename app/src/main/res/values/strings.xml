@@ -8,6 +8,7 @@
     <string name="ToolbarLogo">Remitex-Logo</string>
     <string name="ExportTitle">Daten Transfer</string>
     <string name="ExportButtonExport">Export und Senden</string>
+    <string name="ExportButtonReExport">Re-Export</string>
     <string name="ExportBackButton">Zurück</string>
     <string name="FahrernummerTitle">Fahrer anmelden</string>
     <string name="fahrernummerhint">Fahrernummer</string>
@@ -21,5 +22,7 @@
     <string name="erfassenerfassenbutton">Erfassen</string>
     <string name="erfassenerfassung_beendenbutton">Erfassung beenden</string>
     <string name="erfassenlichtbutton">Licht</string>
-    <string name="title_activity_secure_preferences_helper">SecurePreferencesHelper</string>
+    <string name="title_activity_re_export">ReExportActivity</string>
+    <string name="ReExportTitle">Daten erneut exportieren</string>
+    <string name="reexportexportbutton">Export und Senden</string>
 </resources>

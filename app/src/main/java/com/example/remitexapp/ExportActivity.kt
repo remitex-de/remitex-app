@@ -55,12 +55,22 @@ class ExportActivity : AppCompatActivity() {
             val uri = exportDataToFile(data)
             uri?.let {
                 sendEmailWithAttachment(uri)
+
+                // Aktualisieren des Exportdatums in der Datenbank
+                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val currentDate = sdf.format(Date())
+                db.updateExportDate(fahrernummer, tag, currentDate)
             }
         }
 
         val buttonTransferZurueck = findViewById<Button>(R.id.buttonTransferZurueck)
         buttonTransferZurueck.setOnClickListener {
             finish()  // Aktuelle Activity beenden und zur vorherigen zurückkehren
+        }
+
+        val buttonReExport = findViewById<Button>(R.id.buttonReExport)
+        buttonReExport.setOnClickListener {
+            startActivity(Intent(this, ReExportActivity::class.java))
         }
     }
 
@@ -94,7 +104,7 @@ class ExportActivity : AppCompatActivity() {
         return uri
     }
 
-    fun sendEmailWithAttachment(uri: Uri) {
+    private fun sendEmailWithAttachment(uri: Uri) {
         val emailIntent = Intent(Intent.ACTION_SEND).apply {
             type = "vnd.android.cursor.dir/email"
             putExtra(Intent.EXTRA_EMAIL, arrayOf("m.mischon@remitex.de"))

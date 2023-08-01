@@ -20,6 +20,11 @@
         android:theme="@style/Theme.FahrernummerEingabe"
         tools:targetApi="31">
         <activity
+            android:name=".ReExportActivity"
+            android:exported="false"
+            android:label="@string/title_activity_re_export"
+            android:theme="@style/Theme.FahrernummerEingabe" />
+        <activity
             android:name=".ExportActivity"
             android:exported="false"
             android:label="@string/title_activity_export"
