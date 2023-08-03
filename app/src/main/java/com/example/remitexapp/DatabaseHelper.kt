@@ -98,6 +98,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return tagsList
     }
 
+    // Gefilterte Daten für den Export bereit stellen
     @SuppressLint("Range")
     fun getSelectedData(fahrernummer: String, tag: String): List<Array<String>> {
         val data = mutableListOf<Array<String>>()
@@ -123,6 +124,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return data
     }
 
+    // Exportdatum in der Datenbank aktualisieren
     fun updateExportDate(fahrernummer: String, tag: String, exportdatum: String) {
         val db = this.writableDatabase
         val contentValues = ContentValues().apply {
@@ -131,6 +133,36 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.update(TABLE_NAME, contentValues, "$COLUMN_FAHRERNUMMER = ? AND $COLUMN_TAG = ?", arrayOf(fahrernummer, tag))
         db.close()
     }
+
+    // Überprüfen, ob in der Datenbank der zu erfassende Container am Tag bereits schon mal erfasst wurde
+    @SuppressLint("Range")
+    fun isContainerScannedToday(containernummer: String, tag: String): Boolean {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_NAME WHERE $COLUMN_CONTAINERNUMMER = ? AND $COLUMN_TAG = ?", arrayOf(containernummer, tag))
+
+        val exists = cursor.moveToFirst()
+
+        cursor.close()
+        db.close()
+
+        return exists
+    }
+
+    // Datensatz aktualisieren, wenn in der Datenbank der zu erfassende Container am Tag bereits schon mal erfasst wurde und noch mal erfasst werden soll
+    fun updateContainerRecord(fahrernummer: String, containernummer: String, fuellmenge: Int, tag: String, uhrzeit: String): Int {
+        val db = this.writableDatabase
+        val contentValues = ContentValues()
+
+        contentValues.put(COLUMN_FAHRERNUMMER, fahrernummer)
+        contentValues.put(COLUMN_CONTAINERNUMMER, containernummer)
+        contentValues.put(COLUMN_FUELLMENGE, fuellmenge)
+        contentValues.put(COLUMN_TAG, tag)
+        contentValues.put(COLUMN_UHRZEIT, uhrzeit)
+
+        return db.update(TABLE_NAME, contentValues, "$COLUMN_CONTAINERNUMMER = ? AND $COLUMN_TAG = ?", arrayOf(containernummer, tag))
+    }
+
+
 
 }
 

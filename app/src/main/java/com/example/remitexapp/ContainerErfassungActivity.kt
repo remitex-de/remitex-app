@@ -14,6 +14,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.firebase.database.FirebaseDatabase
@@ -27,7 +28,7 @@ import java.time.format.DateTimeFormatter
 class ContainerErfassungActivity : AppCompatActivity() {
     private lateinit var containernummerInput: EditText
     private lateinit var barcodeView: BarcodeView
-    private val REQUEST_CAMERA_PERMISSION = 200 // Request Code für Kamera Berechtigung
+    private val requestcamerapermission = 200 // Request Code für Kamera Berechtigung
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +43,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.CAMERA),
-                REQUEST_CAMERA_PERMISSION
+                requestcamerapermission
             )
         }
         containernummerInput = findViewById(R.id.editTextContainernummer)
@@ -129,72 +130,102 @@ class ContainerErfassungActivity : AppCompatActivity() {
             // Erstellen einer Instanz von DatabaseHelper
             val dbHelper = DatabaseHelper(this)
 
-            // Öffnen der Datenbank zum Schreiben
-            val db = dbHelper.writableDatabase
-
-            // Erstellen von ContentValues, um die Daten einzufügen
-            val values = ContentValues().apply {
-                put(DatabaseHelper.COLUMN_FAHRERNUMMER, fahrernummer)
-                put(DatabaseHelper.COLUMN_CONTAINERNUMMER, containernummer)
-                put(DatabaseHelper.COLUMN_FUELLMENGE, fuellmenge)
-                put(DatabaseHelper.COLUMN_TAG, currentDate)
-                put(DatabaseHelper.COLUMN_UHRZEIT, currentTime)
-            }
-
-            // Einfügen der Daten in die Datenbank
-            val newRowId = db?.insert(DatabaseHelper.TABLE_NAME, null, values)
-
-            // Erstellung einer Firebase-Instanz
-            val database =
-                FirebaseDatabase.getInstance("https://remitexapp-default-rtdb.europe-west1.firebasedatabase.app")
-            val myRef = database.getReference("ContainerFuellmengen")
-
-            // Erstellung einer Map für die Daten, die zur Firebase-Datenbank hinzugefügt werden
-            val data = mapOf(
-                "fahrernummer" to fahrernummer,
-                "containernummer" to containernummer,
-                "fuellmenge" to fuellmenge,
-                "tag" to currentDate,
-                "uhrzeit" to currentTime
-            )
-
-            // Überprüfen, ob das Einfügen erfolgreich war
-            if (newRowId != -1L) {
-                showMessageInToolbar("Erfassung lokal erfolgreich!") {
-                    // Hinzufügen der Daten zur Firebase-Datenbank
-                    myRef.push().setValue(data) { error, _ ->
-                        if (error != null) {
-                            // Ein Fehler ist aufgetreten
-                            showMessageInToolbar("Fehler beim Schreiben in Firebase Datenbank: ${error.message}")
-                        } else {
-                            // Daten erfolgreich geschrieben
-                            showMessageInToolbar("Erfassung online erfolgreich!")
+            // Überprüfen Sie, ob der Container bereits für den heutigen Tag erfasst wurde
+            if (dbHelper.isContainerScannedToday(containernummer.toString(), currentDate)) {
+                AlertDialog.Builder(this)
+                    .setTitle("Hinweis")
+                    .setMessage("Der Container wurde heute bereits erfasst. Möchten Sie den Barcode erneut erfassen?")
+                    .setPositiveButton("Ja") { _, _ ->
+                        // Hier führen Sie den Code zum Überschreiben des alten Datensatzes aus
+                        if (fahrernummer != null) {
+                            dbHelper.updateContainerRecord(fahrernummer, containernummer.toString(), fuellmenge, currentDate, currentTime)
+                            val rowsUpdated = dbHelper.updateContainerRecord(fahrernummer, containernummer.toString(), fuellmenge, currentDate, currentTime)
+                            if (rowsUpdated > 0) {
+                                showMessageInToolbar("Container erfolgreich aktualisiert")
+                            } else {
+                                showMessageInToolbar("Aktualisierung des Datensatzes fehlgeschlagen")
+                            }
                         }
                     }
-                }
+                    .setNegativeButton("Nein", null)
+                    .show()
+
+                //Felder leeren
+                containernummerInput.setText("")
+                fuellmengeInput.setText("")
+
+                //Fokus zurück zum ersten Eingabefeld
+                containernummerInput.requestFocus()
+
             } else {
-                showMessageInToolbar("Fehler beim Erfassen in lokaler SQLite-Datenbank!") {
-                    // Hinzufügen der Daten zur Firebase-Datenbank
-                    myRef.push().setValue(data) { error, _ ->
-                        if (error != null) {
-                            // Ein Fehler ist aufgetreten
-                            showMessageInToolbar("Fehler beim Schreiben in Firebase Datenbank: ${error.message}")
-                        } else {
-                            // Daten erfolgreich geschrieben
-                            showMessageInToolbar("Erfassung online erfolgreich!")
+                // Fahren Sie fort, um die Daten in die Datenbank einzufügen, wenn der Container heute nicht erfasst wurde
+
+                // Öffnen der Datenbank zum Schreiben
+                val db = dbHelper.writableDatabase
+
+                // Erstellen von ContentValues, um die Daten einzufügen
+                val values = ContentValues().apply {
+                    put(DatabaseHelper.COLUMN_FAHRERNUMMER, fahrernummer)
+                    put(DatabaseHelper.COLUMN_CONTAINERNUMMER, containernummer)
+                    put(DatabaseHelper.COLUMN_FUELLMENGE, fuellmenge)
+                    put(DatabaseHelper.COLUMN_TAG, currentDate)
+                    put(DatabaseHelper.COLUMN_UHRZEIT, currentTime)
+                }
+
+                // Einfügen der Daten in die Datenbank
+                val newRowId = db?.insert(DatabaseHelper.TABLE_NAME, null, values)
+
+                // Erstellung einer Firebase-Instanz
+                val database =
+                    FirebaseDatabase.getInstance("https://remitexapp-default-rtdb.europe-west1.firebasedatabase.app")
+                val myRef = database.getReference("ContainerFuellmengen")
+
+                // Erstellung einer Map für die Daten, die zur Firebase-Datenbank hinzugefügt werden
+                val data = mapOf(
+                    "fahrernummer" to fahrernummer,
+                    "containernummer" to containernummer,
+                    "fuellmenge" to fuellmenge,
+                    "tag" to currentDate,
+                    "uhrzeit" to currentTime
+                )
+
+                // Überprüfen, ob das Einfügen erfolgreich war
+                if (newRowId != -1L) {
+                    showMessageInToolbar("Erfassung lokal erfolgreich!") {
+                        // Hinzufügen der Daten zur Firebase-Datenbank
+                        myRef.push().setValue(data) { error, _ ->
+                            if (error != null) {
+                                // Ein Fehler ist aufgetreten
+                                showMessageInToolbar("Fehler beim Schreiben in Firebase Datenbank: ${error.message}")
+                            } else {
+                                // Daten erfolgreich geschrieben
+                                showMessageInToolbar("Erfassung online erfolgreich!")
+                            }
+                        }
+                    }
+                } else {
+                    showMessageInToolbar("Fehler beim Erfassen in lokaler SQLite-Datenbank!") {
+                        // Hinzufügen der Daten zur Firebase-Datenbank
+                        myRef.push().setValue(data) { error, _ ->
+                            if (error != null) {
+                                // Ein Fehler ist aufgetreten
+                                showMessageInToolbar("Fehler beim Schreiben in Firebase Datenbank: ${error.message}")
+                            } else {
+                                // Daten erfolgreich geschrieben
+                                showMessageInToolbar("Erfassung online erfolgreich!")
+                            }
                         }
                     }
                 }
+
+                //Felder leeren
+                containernummerInput.setText("")
+                fuellmengeInput.setText("")
+
+                //Fokus zurück zum ersten Eingabefeld
+                containernummerInput.requestFocus()
             }
-
-            //Felder leeren
-            containernummerInput.setText("")
-            fuellmengeInput.setText("")
-
-            //Fokus zurück zum ersten Eingabefeld
-            containernummerInput.requestFocus()
-        }
-
+            }
 
         abmeldenButton.setOnClickListener {
             startActivity(Intent(this, FahrernummerEingabeActivity::class.java))
@@ -219,7 +250,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
-            REQUEST_CAMERA_PERMISSION -> {
+            requestcamerapermission -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Die Kamera-Berechtigung wurde gewährt. Sie können hier Ihren Barcode-Scanning-Code ausführen.
                 } else {
