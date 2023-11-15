@@ -1,6 +1,5 @@
 package com.example.remitexapp
 
-import DatabaseHelper
 import android.Manifest
 import android.content.ContentValues
 import android.content.Context
@@ -24,6 +23,8 @@ import com.journeyapps.barcodescanner.BarcodeResult
 import com.journeyapps.barcodescanner.BarcodeView
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import android.media.MediaPlayer
+import android.provider.Settings
 
 class ContainerErfassungActivity : AppCompatActivity() {
     private lateinit var containernummerInput: EditText
@@ -88,6 +89,13 @@ class ContainerErfassungActivity : AppCompatActivity() {
                         lightButton.visibility = View.GONE
                         containernummerInput.setText(result.text)
 
+                        // Taschenlampe ausschalten, falls eingeschaltet
+                        if (isFlashOn) {
+                            barcodeView.setTorch(false)
+                            isFlashOn = false
+                        }
+                        // Abspielen des Bestätigungstons
+                        playBeep()
                         // Setzen Sie den Fokus auf fuellmengeInput und verhindern Sie die automatische Öffnung der Tastatur
                         fuellmengeInput.requestFocus()
                         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -127,7 +135,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
             val currentDate = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
             val currentTime = currentDateTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
 
-            // Erstellen einer Instanz von DatabaseHelper
+            // Erstellen einer Instanz von com.example.remitexapp.DatabaseHelper
             val dbHelper = DatabaseHelper(this)
 
             // Überprüfen Sie, ob der Container bereits für den heutigen Tag erfasst wurde
@@ -270,5 +278,15 @@ class ContainerErfassungActivity : AppCompatActivity() {
             toolbarMessage.visibility = View.GONE
             onMessageHidden?.invoke()
         }, 2000)
+    }
+    // Ton abspielen, wenn Barcode erfolgreich gescanned wurde
+    private fun playBeep() {
+        try {
+            val notification = MediaPlayer.create(this, Settings.System.DEFAULT_NOTIFICATION_URI)
+            notification?.start()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Optional: Behandlung von Ausnahmen, z.B. Anzeigen einer Fehlermeldung
+        }
     }
 }

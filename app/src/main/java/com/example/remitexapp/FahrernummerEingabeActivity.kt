@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 class FahrernummerEingabeActivity : AppCompatActivity() {
@@ -47,9 +48,28 @@ class FahrernummerEingabeActivity : AppCompatActivity() {
         }
         */
 
+
         buttonTransferDaten.setOnClickListener {
             val intent = Intent(this, ExportActivity::class.java)
             startActivity(intent)
         }
+    }
+    // Hinweis beim Betätigen des Android Zurück Button
+    override fun onBackPressed() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("App beenden")
+        builder.setMessage("Möchten Sie die App wirklich beenden?")
+
+        builder.setPositiveButton("Ja") { dialog, _ ->
+            dialog.dismiss()
+            finishAffinity() // Beendet alle Aktivitäten und die App
+        }
+
+        builder.setNegativeButton("Nein") { dialog, _ ->
+            dialog.dismiss() // Schließt nur das Dialogfenster
+        }
+
+        val dialog: AlertDialog = builder.create()
+        dialog.show()
     }
 }

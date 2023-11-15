@@ -1,6 +1,5 @@
 package com.example.remitexapp
 
-import DatabaseHelper
 import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
@@ -9,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.Spinner
@@ -38,20 +38,46 @@ class ExportActivity : AppCompatActivity() {
         val fahrernummerSpinner = findViewById<Spinner>(R.id.fahrernummerSpinner)
         val tagSpinner = findViewById<Spinner>(R.id.tagSpinner)
 
-        // Eindeutige Werte für Filter-Felder aus der Datenbank holen
+        // Eindeutige Werte für Fahrernummer-Feld aus der Datenbank holen
         val fahrernummerValues = db.getAllFahrernummern()
-        val tagValues = db.getAllTags()
 
-        // ArrayAdapter erstellen und an Spinner binden
+        // ArrayAdapter erstellen und an fahrernummerSpinner binden
         fahrernummerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, fahrernummerValues)
-        tagSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, tagValues)
+
+        // Listener für Fahrernummer-Auswahl
+        fahrernummerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parentView: AdapterView<*>, selectedItemView: View, position: Int, id: Long) {
+                val selectedFahrernummer = fahrernummerSpinner.selectedItem as String
+
+                // Daten für die ausgewählte Fahrernummer holen und Adapter für tagSpinner aktualisieren
+                val updatedTagValues = db.getTagsForFahrernummer(selectedFahrernummer)
+                val tagAdapter = ArrayAdapter(this@ExportActivity, android.R.layout.simple_dropdown_item_1line, updatedTagValues)
+                tagSpinner.adapter = tagAdapter
+            }
+
+            // Wenn nichts ausgewählt wurde
+            override fun onNothingSelected(parentView: AdapterView<*>) {
+                showMessageInToolbar("Keine Daten zum Exportieren verfügbar.")
+            }
+        }
 
         // Button-Funktionen
         val buttonTransferExport = findViewById<Button>(R.id.buttonTransferExport)
         buttonTransferExport.setOnClickListener {
-            val fahrernummer = fahrernummerSpinner.selectedItem as String
-            val tag = tagSpinner.selectedItem as String
+            val fahrernummer = fahrernummerSpinner.selectedItem as? String
+            val tag = tagSpinner.selectedItem as? String
+
+            if (fahrernummer == null || tag == null) {
+                showMessageInToolbar("Bitte wählen Sie gültige Optionen aus.")
+                return@setOnClickListener
+            }
+
+            // Überprüfen Sie, ob Daten für die ausgewählten Optionen vorhanden sind
             val data = db.getSelectedData(fahrernummer, tag)
+            if (data.isEmpty()) {
+                showMessageInToolbar("Keine Daten zum Exportieren verfügbar.")
+                return@setOnClickListener
+            }
             val uri = exportDataToFile(data)
             uri?.let {
                 sendEmailWithAttachment(uri)
@@ -89,7 +115,7 @@ class ExportActivity : AppCompatActivity() {
         uri?.let {
             resolver.openOutputStream(it)?.use { outputStream ->
                 data.forEach { record ->
-                    outputStream.write("${record.joinToString(",")}\n".toByteArray())
+                    outputStream.write((record.joinToString(",") + "\r\n").toByteArray())
                 }
             }
 
@@ -107,7 +133,7 @@ class ExportActivity : AppCompatActivity() {
     private fun sendEmailWithAttachment(uri: Uri) {
         val emailIntent = Intent(Intent.ACTION_SEND).apply {
             type = "vnd.android.cursor.dir/email"
-            putExtra(Intent.EXTRA_EMAIL, arrayOf("m.mischon@remitex.de"))
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("c.fluegel@remitex.de"))
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_SUBJECT, "Scan-Datenexport")
         }

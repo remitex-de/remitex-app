@@ -1,7 +1,8 @@
+package com.example.remitexapp
+
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
@@ -32,7 +33,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME)
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
         onCreate(db)
     }
 
@@ -66,7 +67,16 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     // Fahrernummer Spinner Filter in ExportActivity mit Werten der Datenbank füllen
     fun getAllFahrernummern(): List<String> {
         val fahrernummern = ArrayList<String>()
-        val selectQuery = "SELECT DISTINCT $COLUMN_FAHRERNUMMER FROM $TABLE_NAME WHERE $COLUMN_EXPORTDATUM IS NULL"
+
+        val selectQuery = """
+        SELECT DISTINCT $COLUMN_FAHRERNUMMER 
+        FROM $TABLE_NAME 
+        WHERE $COLUMN_FAHRERNUMMER IN (
+            SELECT DISTINCT $COLUMN_FAHRERNUMMER 
+            FROM $TABLE_NAME 
+            WHERE $COLUMN_EXPORTDATUM IS NULL OR $COLUMN_EXPORTDATUM = ''
+        )
+    """
 
         val db = this.readableDatabase
         val cursor = db.rawQuery(selectQuery, null)
@@ -80,22 +90,28 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return fahrernummern
     }
 
-    // Datum Spinner Filter in ExportActivity mit Werten der Datenbank füllen
-    @SuppressLint("Range")
-    fun getAllTags(): List<String> {
-        val tagsList = ArrayList<String>()
-        val db = readableDatabase
-        val selectQuery = "SELECT DISTINCT $COLUMN_TAG FROM $TABLE_NAME WHERE $COLUMN_EXPORTDATUM IS NULL ORDER BY $COLUMN_TAG DESC"
-        val cursor: Cursor = db.rawQuery(selectQuery, null)
+    // Daten im Datum Spinner Filter in ExportActivity basierend auf der ausgewählten fahrernummer filtern und in den Spinner füllen
+    fun getTagsForFahrernummer(fahrernummer: String): List<String> {
+        val tags = mutableListOf<String>()
+        val db = this.readableDatabase
+
+        val query = """
+        SELECT DISTINCT $COLUMN_TAG 
+        FROM $TABLE_NAME 
+        WHERE $COLUMN_FAHRERNUMMER = ? AND ($COLUMN_EXPORTDATUM IS NULL OR $COLUMN_EXPORTDATUM = '')
+    """
+        val cursor = db.rawQuery(query, arrayOf(fahrernummer))
 
         if (cursor.moveToFirst()) {
-            do {
-                tagsList.add(cursor.getString(cursor.getColumnIndex(COLUMN_TAG)))
-            } while (cursor.moveToNext())
+            val columnIndex = cursor.getColumnIndex(COLUMN_TAG)
+            if (columnIndex != -1) {
+                do {
+                    tags.add(cursor.getString(columnIndex))
+                } while (cursor.moveToNext())
+            }
         }
-
         cursor.close()
-        return tagsList
+        return tags
     }
 
     // Gefilterte Daten für den Export bereit stellen
@@ -161,8 +177,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
         return db.update(TABLE_NAME, contentValues, "$COLUMN_CONTAINERNUMMER = ? AND $COLUMN_TAG = ?", arrayOf(containernummer, tag))
     }
-
-
 
 }
 

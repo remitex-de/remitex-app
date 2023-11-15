@@ -1,6 +1,5 @@
 package com.example.remitexapp
 
-import DatabaseHelper
 import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
@@ -90,7 +89,7 @@ class ReExportActivity : AppCompatActivity() {
             uri?.let {
                 resolver.openOutputStream(it)?.use { outputStream ->
                     data.forEach { record ->
-                        outputStream.write("${record.joinToString(",")}\n".toByteArray())
+                        outputStream.write((record.joinToString(",") + "\r\n").toByteArray())
                     }
                 }
 
