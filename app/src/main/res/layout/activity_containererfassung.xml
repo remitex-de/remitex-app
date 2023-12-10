@@ -106,42 +106,98 @@
 
             <Button
                 android:id="@+id/button0"
-                android:layout_width="52dp"
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
                 android:text="0"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
-                android:id="@+id/button25"
-                android:layout_width="52dp"
+                android:id="@+id/button10"
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:text="25"
+                android:text="10"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button20"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="20"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button30"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="30"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/button40"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="40"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
                 android:id="@+id/button50"
-                android:layout_width="52dp"
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
                 android:text="50"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
-                android:id="@+id/button75"
-                android:layout_width="52dp"
+                android:id="@+id/button60"
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:text="75"
+                android:text="60"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button70"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="70"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/button80"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="80"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button90"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="90"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
                 android:id="@+id/button100"
-                android:layout_width="52dp"
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
                 android:text="100"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
                 android:id="@+id/button120"
-                android:layout_width="52dp"
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
                 android:text="120"
                 tools:ignore="ButtonStyle,HardcodedText" />
