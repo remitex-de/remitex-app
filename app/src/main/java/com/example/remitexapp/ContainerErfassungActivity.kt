@@ -2,7 +2,7 @@ package com.example.remitexapp
 
 import android.Manifest
 import android.content.ContentValues
-import android.content.Context
+// import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -16,7 +16,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.google.firebase.database.FirebaseDatabase
+// import com.google.firebase.database.FirebaseDatabase
 import com.google.zxing.ResultPoint
 import com.journeyapps.barcodescanner.BarcodeCallback
 import com.journeyapps.barcodescanner.BarcodeResult
@@ -104,7 +104,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
                         playBeep()
                         // Setzen Sie den Fokus auf fuellmengeInput und verhindern Sie die automatische Öffnung der Tastatur
                         fuellmengeInput.requestFocus()
-                        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                         imm.hideSoftInputFromWindow(fuellmengeInput.windowToken, 0)
                     }
 
@@ -195,6 +195,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
                 // Einfügen der Daten in die Datenbank
                 val newRowId = db?.insert(DatabaseHelper.TABLE_NAME, null, values)
 
+                /*
                 // Erstellung einer Firebase-Instanz
                 val database =
                     FirebaseDatabase.getInstance("https://remitexapp-default-rtdb.europe-west1.firebasedatabase.app")
@@ -208,10 +209,13 @@ class ContainerErfassungActivity : AppCompatActivity() {
                     "tag" to currentDate,
                     "uhrzeit" to currentTime
                 )
+                */
 
                 // Überprüfen, ob das Einfügen erfolgreich war
                 if (newRowId != -1L) {
-                    showMessageInToolbar("Erfassung lokal erfolgreich!") {
+                    showMessageInToolbar("Erfassung lokal erfolgreich!")
+                    /*
+                    {
                         // Hinzufügen der Daten zur Firebase-Datenbank
                         myRef.push().setValue(data) { error, _ ->
                             if (error != null) {
@@ -223,8 +227,11 @@ class ContainerErfassungActivity : AppCompatActivity() {
                             }
                         }
                     }
+                    */
                 } else {
-                    showMessageInToolbar("Fehler beim Erfassen in lokaler SQLite-Datenbank!") {
+                    showMessageInToolbar("Fehler beim Erfassen in lokaler SQLite-Datenbank!")
+                    /*
+                    {
                         // Hinzufügen der Daten zur Firebase-Datenbank
                         myRef.push().setValue(data) { error, _ ->
                             if (error != null) {
@@ -236,6 +243,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
                             }
                         }
                     }
+                    */
                 }
 
                 //Felder leeren

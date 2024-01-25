@@ -7,7 +7,7 @@ plugins {
 android {
     signingConfigs {
         release {
-            storeFile file("I:/OneDrive - Remitex/Apps/Remitex Container App/remitex.keystore")
+            storeFile file("Z:/Software&Treiber/Remitex Container App/remitex.keystore")
             storePassword "Remitex199"
             keyAlias "Remitex"
             keyPassword "Remitex199"
@@ -21,8 +21,8 @@ android {
         applicationId "com.example.remitexapp"
         minSdk 29
         targetSdk 33
-        versionCode 9
-        versionName "1.4.1"
+        versionCode 10
+        versionName "1.4.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

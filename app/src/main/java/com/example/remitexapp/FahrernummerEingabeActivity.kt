@@ -55,6 +55,7 @@ class FahrernummerEingabeActivity : AppCompatActivity() {
         }
     }
     // Hinweis beim Betätigen des Android Zurück Button
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("App beenden")
