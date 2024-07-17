@@ -15,14 +15,15 @@
     <string name="fahrernummeranmeldenbutton">Anmelden</string>
     <string name="fahrernummerdatentransferbutton">Daten Transfer</string>
     <string name="erfassungfuellmengen_erfassen">Füllmengen erfassen</string>
-    <string name="erfassencontainernummerhint">Containernummer</string>
-    <string name="erfassenbarcode_scannenbutton">Barcode scannen</string>
+    <string name="erfassencontainernummerhint">Containernr.</string>
+    <string name="erfassenbarcode_scannenbutton">1. Barcode scannen</string>
     <string name="erfassenabbrechenbutton">Abbrechen</string>
-    <string name="erfassenfuellmenge_in_prozenthint">Füllmenge in Prozent</string>
-    <string name="erfassenerfassenbutton">Erfassen</string>
-    <string name="erfassenerfassung_beendenbutton">Erfassung beenden</string>
+    <string name="erfassenfuellmenge_in_prozenthint">Füllmenge %</string>
+    <string name="erfassenerfassenbutton">3. Speichern</string>
+    <string name="erfassenerfassung_beendenbutton">Beenden</string>
     <string name="erfassenlichtbutton">Licht</string>
     <string name="title_activity_re_export">ReExportActivity</string>
     <string name="ReExportTitle">Daten erneut exportieren</string>
     <string name="reexportexportbutton">Export und Senden</string>
+    <string name="foto_machen">2. Foto machen (optional)</string>
 </resources>

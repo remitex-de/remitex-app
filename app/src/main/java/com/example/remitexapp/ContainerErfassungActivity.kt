@@ -1,53 +1,101 @@
 package com.example.remitexapp
 
-import android.Manifest
-import android.content.ContentValues
 // import android.content.Context
+// import com.google.firebase.database.FirebaseDatabase
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaPlayer
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
+import android.provider.Settings
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-// import com.google.firebase.database.FirebaseDatabase
+import androidx.core.content.FileProvider
 import com.google.zxing.ResultPoint
 import com.journeyapps.barcodescanner.BarcodeCallback
 import com.journeyapps.barcodescanner.BarcodeResult
 import com.journeyapps.barcodescanner.BarcodeView
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import android.media.MediaPlayer
-import android.provider.Settings
+import java.util.Date
+import java.util.Locale
 
 class ContainerErfassungActivity : AppCompatActivity() {
     private lateinit var containernummerInput: EditText
     private lateinit var barcodeView: BarcodeView
+    private lateinit var takePictureLauncher: ActivityResultLauncher<Intent>
+    private val photos = mutableListOf<Bitmap>()
+    private lateinit var fotoCounter: TextView
+    private lateinit var currentPhotoPath: String
     private val requestcamerapermission = 200 // Request Code für Kamera Berechtigung
 
+    // Hinzufügen des requestPermissionsLauncher
+    private val requestPermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        permissions.entries.forEach {
+            val isGranted = it.value
+            if (!isGranted) {
+                showMessageInToolbar("Berechtigungen sind erforderlich, um fortzufahren.")
+            }
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_containererfassung)
 
-        // Überprüfen Sie die Kameraberechtigung und fordern Sie sie an, wenn sie noch nicht erteilt wurde
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CAMERA
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.CAMERA),
-                requestcamerapermission
+        // Initialisiere dbHelper
+        val dbHelper = DatabaseHelper(this)
+
+        // Berechtigungen anfordern
+        checkAndRequestPermissions()
+
+        // Überprüfen Sie die erforderlichen Berechtigungen und fordern Sie sie an, wenn sie noch nicht erteilt wurden
+        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        } else {
+            arrayOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
             )
         }
+
+        if (permissions.any { ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }) {
+            requestPermissionsLauncher.launch(permissions)
+        }
+
         containernummerInput = findViewById(R.id.editTextContainernummer)
+        fotoCounter = findViewById(R.id.fotoCounter)
         val fahrernummer = intent.getStringExtra("fahrernummer")
         val fuellmengeInput = findViewById<EditText>(R.id.editTextFuellmenge)
         val erfassenButton = findViewById<Button>(R.id.buttonErfassen)
@@ -55,17 +103,16 @@ class ContainerErfassungActivity : AppCompatActivity() {
         val scanBarcodeButton = findViewById<Button>(R.id.scanBarcodeButton)
         val lightButton = findViewById<Button>(R.id.lightButton)
         val button0 = findViewById<Button>(R.id.button0)
-        val button10 = findViewById<Button>(R.id.button10)
-        val button20 = findViewById<Button>(R.id.button20)
-        val button30 = findViewById<Button>(R.id.button30)
-        val button40 = findViewById<Button>(R.id.button40)
+        val button15 = findViewById<Button>(R.id.button15)
+        val button25 = findViewById<Button>(R.id.button25)
+        val button35 = findViewById<Button>(R.id.button35)
         val button50 = findViewById<Button>(R.id.button50)
-        val button60 = findViewById<Button>(R.id.button60)
-        val button70 = findViewById<Button>(R.id.button70)
-        val button80 = findViewById<Button>(R.id.button80)
+        val button65 = findViewById<Button>(R.id.button65)
+        val button75 = findViewById<Button>(R.id.button75)
         val button90 = findViewById<Button>(R.id.button90)
         val button100 = findViewById<Button>(R.id.button100)
-        val button120 = findViewById<Button>(R.id.button120)
+        val button110 = findViewById<Button>(R.id.button110)
+        val buttonFotoMachen = findViewById<Button>(R.id.buttonFotoMachen)
         barcodeView = findViewById(R.id.barcode_view)
         var isFlashOn = false
 
@@ -93,19 +140,23 @@ class ContainerErfassungActivity : AppCompatActivity() {
                     override fun barcodeResult(result: BarcodeResult) {
                         barcodeView.visibility = View.GONE
                         lightButton.visibility = View.GONE
-                        containernummerInput.setText(result.text)
-
-                        // Taschenlampe ausschalten, falls eingeschaltet
-                        if (isFlashOn) {
-                            barcodeView.setTorch(false)
-                            isFlashOn = false
+                        val scannedValue = result.text
+                        if (scannedValue.matches(Regex("\\d{5}"))) {
+                            containernummerInput.setText(scannedValue)
+                            // Taschenlampe ausschalten, falls eingeschaltet
+                            if (isFlashOn) {
+                                barcodeView.setTorch(false)
+                                isFlashOn = false
+                            }
+                            // Abspielen des Bestätigungstons
+                            playBeep()
+                            // Setzen Sie den Fokus auf fuellmengeInput und verhindern Sie die automatische Öffnung der Tastatur
+                            fuellmengeInput.requestFocus()
+                            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                            imm.hideSoftInputFromWindow(fuellmengeInput.windowToken, 0)
+                        } else {
+                            showMessageInToolbar("ACHTUNG: Bitte gültige Containernummer scannen oder manuell eintippen.")
                         }
-                        // Abspielen des Bestätigungstons
-                        playBeep()
-                        // Setzen Sie den Fokus auf fuellmengeInput und verhindern Sie die automatische Öffnung der Tastatur
-                        fuellmengeInput.requestFocus()
-                        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        imm.hideSoftInputFromWindow(fuellmengeInput.windowToken, 0)
                     }
 
                     override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {}
@@ -113,27 +164,49 @@ class ContainerErfassungActivity : AppCompatActivity() {
             }
         }
 
-
         val buttonClickListener = View.OnClickListener { view ->
             val button = view as Button
             fuellmengeInput.setText(button.text)
         }
 
         button0.setOnClickListener(buttonClickListener)
-        button10.setOnClickListener(buttonClickListener)
-        button20.setOnClickListener(buttonClickListener)
-        button30.setOnClickListener(buttonClickListener)
-        button40.setOnClickListener(buttonClickListener)
+        button15.setOnClickListener(buttonClickListener)
+        button25.setOnClickListener(buttonClickListener)
+        button35.setOnClickListener(buttonClickListener)
         button50.setOnClickListener(buttonClickListener)
-        button60.setOnClickListener(buttonClickListener)
-        button70.setOnClickListener(buttonClickListener)
-        button80.setOnClickListener(buttonClickListener)
+        button65.setOnClickListener(buttonClickListener)
+        button75.setOnClickListener(buttonClickListener)
         button90.setOnClickListener(buttonClickListener)
         button100.setOnClickListener(buttonClickListener)
-        button120.setOnClickListener(buttonClickListener)
+        button110.setOnClickListener(buttonClickListener)
+
+        takePictureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val bitmap = BitmapFactory.decodeFile(currentPhotoPath)
+                bitmap?.let {
+                    // Temporär das Bild speichern, um es zu bestätigen
+                    AlertDialog.Builder(this)
+                        .setTitle("Foto Bestätigung")
+                        .setMessage("Ist das aufgenommene Foto in Ordnung?")
+                        .setPositiveButton("Ja") { _, _ ->
+                            photos.add(it)
+                            fotoCounter.text = photos.size.toString()
+                            fotoCounter.visibility = View.VISIBLE
+                        }
+                        .setNegativeButton("Nein") { _, _ ->
+                            // Foto wird verworfen
+                            File(currentPhotoPath).delete()
+                        }
+                        .show()
+                }
+            }
+        }
+
+        buttonFotoMachen.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
 
         erfassenButton.setOnClickListener {
-
             // Überprüfen, ob beide Felder ausgefüllt sind
             if (containernummerInput.text.isNullOrEmpty() || fuellmengeInput.text.isNullOrEmpty()) {
                 // Wenn nicht, zeigen Sie eine Nachricht an und kehren Sie zurück
@@ -147,8 +220,54 @@ class ContainerErfassungActivity : AppCompatActivity() {
             val currentDate = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
             val currentTime = currentDateTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
 
-            // Erstellen einer Instanz von com.example.remitexapp.DatabaseHelper
-            val dbHelper = DatabaseHelper(this)
+            // Fotos speichern und komprimieren
+            val photoUris = mutableListOf<String>()
+            val directory = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ContainerFotos")
+
+            if (!directory.exists()) {
+                directory.mkdirs()
+            }
+
+            photos.forEachIndexed { index, bitmap ->
+                val filename = if (index == 0) {
+                    "${containernummer}.jpg"
+                } else {
+                    "${containernummer}_$index.jpg"
+                }
+
+                val file = File(directory, filename)
+                var quality = 90
+                var fileOutputStream: FileOutputStream? = null
+
+                do {
+                    try {
+                        fileOutputStream = FileOutputStream(file)
+                        val byteArrayOutputStream = ByteArrayOutputStream()
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, byteArrayOutputStream)
+                        val byteArray = byteArrayOutputStream.toByteArray()
+
+                        // Check if the size is less than 600 KB
+                        if (byteArray.size / 1024 < 600) {
+                            fileOutputStream.write(byteArray)
+                            fileOutputStream.close()
+                            break
+                        } else {
+                            // Reduce the quality and try again
+                            quality -= 10
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        fileOutputStream?.close()
+                    }
+                } while (quality > 10)  // Stop if quality drops below a certain threshold
+
+                photoUris.add(file.absolutePath)
+            }
+
+            // Leere die Liste der Fotos nach dem Speichern
+            photos.clear()
+            fotoCounter.visibility = View.GONE
 
             // Überprüfen Sie, ob der Container bereits für den heutigen Tag erfasst wurde
             if (dbHelper.isContainerScannedToday(containernummer.toString(), currentDate)) {
@@ -158,8 +277,14 @@ class ContainerErfassungActivity : AppCompatActivity() {
                     .setPositiveButton("Ja") { _, _ ->
                         // Hier führen Sie den Code zum Überschreiben des alten Datensatzes aus
                         if (fahrernummer != null) {
-                            dbHelper.updateContainerRecord(fahrernummer, containernummer.toString(), fuellmenge, currentDate, currentTime)
-                            val rowsUpdated = dbHelper.updateContainerRecord(fahrernummer, containernummer.toString(), fuellmenge, currentDate, currentTime)
+                            val rowsUpdated = dbHelper.updateContainerRecord(
+                                fahrernummer,
+                                containernummer.toString(),
+                                fuellmenge,
+                                currentDate,
+                                currentTime,
+                                photoUris
+                            )
                             if (rowsUpdated > 0) {
                                 showMessageInToolbar("Container erfolgreich aktualisiert")
                             } else {
@@ -170,31 +295,23 @@ class ContainerErfassungActivity : AppCompatActivity() {
                     .setNegativeButton("Nein", null)
                     .show()
 
-                //Felder leeren
+                // Felder leeren
                 containernummerInput.setText("")
                 fuellmengeInput.setText("")
 
-                //Fokus zurück zum ersten Eingabefeld
+                // Fokus zurück zum ersten Eingabefeld
                 containernummerInput.requestFocus()
 
             } else {
                 // Fahren Sie fort, um die Daten in die Datenbank einzufügen, wenn der Container heute nicht erfasst wurde
-
-                // Öffnen der Datenbank zum Schreiben
-                val db = dbHelper.writableDatabase
-
-                // Erstellen von ContentValues, um die Daten einzufügen
-                val values = ContentValues().apply {
-                    put(DatabaseHelper.COLUMN_FAHRERNUMMER, fahrernummer)
-                    put(DatabaseHelper.COLUMN_CONTAINERNUMMER, containernummer)
-                    put(DatabaseHelper.COLUMN_FUELLMENGE, fuellmenge)
-                    put(DatabaseHelper.COLUMN_TAG, currentDate)
-                    put(DatabaseHelper.COLUMN_UHRZEIT, currentTime)
-                }
-
-                // Einfügen der Daten in die Datenbank
-                val newRowId = db?.insert(DatabaseHelper.TABLE_NAME, null, values)
-
+                val newRowId = dbHelper.insertContainerRecord(
+                    fahrernummer.toString(),
+                    containernummer.toString(),
+                    fuellmenge,
+                    currentDate,
+                    currentTime,
+                    photoUris
+                )
                 /*
                 // Erstellung einer Firebase-Instanz
                 val database =
@@ -228,6 +345,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
                         }
                     }
                     */
+
                 } else {
                     showMessageInToolbar("Fehler beim Erfassen in lokaler SQLite-Datenbank!")
                     /*
@@ -246,14 +364,15 @@ class ContainerErfassungActivity : AppCompatActivity() {
                     */
                 }
 
-                //Felder leeren
+                // Felder leeren
                 containernummerInput.setText("")
                 fuellmengeInput.setText("")
 
-                //Fokus zurück zum ersten Eingabefeld
+                // Fokus zurück zum ersten Eingabefeld
                 containernummerInput.requestFocus()
             }
-            }
+        }
+
 
         abmeldenButton.setOnClickListener {
             startActivity(Intent(this, FahrernummerEingabeActivity::class.java))
@@ -288,6 +407,45 @@ class ContainerErfassungActivity : AppCompatActivity() {
             }
         }
     }
+    // Überprüfen Sie die erforderlichen Berechtigungen und fordern Sie sie an
+    private fun checkAndRequestPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionsLauncher.launch(
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.READ_MEDIA_AUDIO
+                )
+            )
+        } else {
+            requestPermissionsLauncher.launch(
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
+            )
+        }
+    }
+    //Temporäre Fotodatei erstellen
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "JPEG_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        ).apply {
+            // Save a file: path for use with ACTION_VIEW intents
+            currentPhotoPath = absolutePath
+        }
+    }
+    private fun getUriForFile(file: File): Uri {
+        return FileProvider.getUriForFile(this, "com.example.remitexapp.fileprovider", file)
+    }
+
+    // Meldung am oberen Bildschirm anzeigen
     private fun showMessageInToolbar(message: String, onMessageHidden: (() -> Unit)? = null) {
         val toolbarMessage: TextView = findViewById(R.id.toolbar_message)
         toolbarMessage.text = message
@@ -297,7 +455,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
         Handler(Looper.getMainLooper()).postDelayed({
             toolbarMessage.visibility = View.GONE
             onMessageHidden?.invoke()
-        }, 2000)
+        }, 3000)
     }
     // Ton abspielen, wenn Barcode erfolgreich gescanned wurde
     private fun playBeep() {
@@ -307,6 +465,26 @@ class ContainerErfassungActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             // Optional: Behandlung von Ausnahmen, z.B. Anzeigen einer Fehlermeldung
+        }
+    }
+    // Containerfoto aufnehmen
+    private fun dispatchTakePictureIntent() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        // Stellen Sie sicher, dass es eine Aktivität gibt, die das Intent handhaben kann
+        takePictureIntent.resolveActivity(packageManager)?.also {
+            // Erstellen Sie die Datei, in der das Foto gespeichert werden soll
+            val photoFile: File? = try {
+                createImageFile()
+            } catch (ex: IOException) {
+                // Fehlerbehandlung, wenn die Datei nicht erstellt werden kann
+                null
+            }
+            // Fahren Sie nur fort, wenn die Datei erfolgreich erstellt wurde
+            photoFile?.also {
+                val photoURI: Uri = getUriForFile(it)
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                takePictureLauncher.launch(takePictureIntent)
+            }
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.example.remitexapp
 
 import android.content.ContentValues
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -60,11 +59,13 @@ class ReExportActivity : AppCompatActivity() {
                     }
                 }
                 val uri = exportDataToFile(selectedData)
+                val photoUris = db.getAllPhotoUrisForContainer(this, selectedData)
                 uri?.let {
-                    sendEmailWithAttachment(uri)
+                    db.sendEmailWithAttachments(this, it, photoUris, "c.fluegel@remitex.de")
                 }
             }
         }
+
 
 
         // Zurück Button Funktion Aktuelle Activity beenden und zur vorherigen zurückkehren
@@ -74,7 +75,7 @@ class ReExportActivity : AppCompatActivity() {
         }
     }
 
-        private fun exportDataToFile(data: List<Array<String>>): Uri? {
+    private fun exportDataToFile(data: List<Array<String>>): Uri? {
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             val fileName = "export_$timeStamp.txt"
 
@@ -102,21 +103,9 @@ class ReExportActivity : AppCompatActivity() {
                 showMessageInToolbar("Fehler beim Exportieren der Daten.")
             }
             return uri
-        }
+    }
 
-        private fun sendEmailWithAttachment(uri: Uri) {
-            val emailIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "vnd.android.cursor.dir/email"
-                putExtra(Intent.EXTRA_EMAIL, arrayOf("m.mischon@remitex.de"))
-                putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_SUBJECT, "Scan-Datenexport")
-            }
-
-            startActivity(Intent.createChooser(emailIntent, "Senden Sie E-Mail..."))
-        }
-
-
-        override fun onDestroy() {
+    override fun onDestroy() {
             super.onDestroy()
             scope.cancel() // Coroutine-Scope wird abgebrochen, wenn die Activity zerstört wird
         }

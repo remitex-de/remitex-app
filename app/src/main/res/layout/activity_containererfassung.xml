@@ -10,30 +10,30 @@
         android:layout_width="match_parent"
         android:layout_height="100dp">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:background="?attr/colorPrimary"
-        android:elevation="4dp">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:background="?attr/colorPrimary"
+            android:elevation="4dp">
 
-        <ImageView
-            android:layout_width="100dp"
-            android:layout_height="40dp"
-            android:src="@drawable/remitexlogo"
-            android:layout_gravity="end"
-            android:contentDescription="@string/ToolbarLogo" />
+            <ImageView
+                android:layout_width="100dp"
+                android:layout_height="40dp"
+                android:src="@drawable/remitexlogo"
+                android:layout_gravity="end"
+                android:contentDescription="@string/ToolbarLogo" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/ToolbarTitle"
-            android:textColor="@android:color/black"
-            android:textSize="28sp"
-            android:layout_marginStart="18dp"
-            android:textStyle="bold"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/ToolbarTitle"
+                android:textColor="@android:color/black"
+                android:textSize="28sp"
+                android:layout_marginStart="18dp"
+                android:textStyle="bold"/>
 
-    </androidx.appcompat.widget.Toolbar>
+        </androidx.appcompat.widget.Toolbar>
 
     </FrameLayout>
 
@@ -55,26 +55,28 @@
             android:paddingStart="4dp"
             android:paddingEnd="4dp"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/editTextContainernummer"
-            android:layout_width="180dp"
-            android:layout_height="58dp"
-            android:hint="@string/erfassencontainernummerhint"
-            android:inputType="number"
-            android:autofillHints="" />
-
-        <Button
-            android:id="@+id/scanBarcodeButton"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/erfassenbarcode_scannenbutton" />
+            android:orientation="horizontal">
 
-    </LinearLayout>
+            <EditText
+                android:id="@+id/editTextContainernummer"
+                android:layout_width="140dp"
+                android:layout_height="58dp"
+                android:hint="@string/erfassencontainernummerhint"
+                android:inputType="number"
+                android:autofillHints="" />
+
+            <Button
+                android:id="@+id/scanBarcodeButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/erfassenbarcode_scannenbutton"
+                android:textSize="16sp"
+                />
+
+        </LinearLayout>
 
         <Button
             android:id="@+id/lightButton"
@@ -93,7 +95,7 @@
 
         <EditText
             android:id="@+id/editTextFuellmenge"
-            android:layout_width="180dp"
+            android:layout_width="140dp"
             android:layout_height="58dp"
             android:hint="@string/erfassenfuellmenge_in_prozenthint"
             android:inputType="number"
@@ -106,30 +108,38 @@
 
             <Button
                 android:id="@+id/button0"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
                 android:text="0"
+                android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
-                android:id="@+id/button10"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="10"
+                android:id="@+id/button15"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
+                android:text="15"
+                android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
-                android:id="@+id/button20"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="20"
+                android:id="@+id/button25"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
+                android:text="25"
+                android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
-                android:id="@+id/button30"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="30"
+                android:id="@+id/button35"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
+                android:text="35"
+                android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
         </LinearLayout>
@@ -138,94 +148,131 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/button40"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="40"
-                tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
                 android:id="@+id/button50"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
                 android:text="50"
+                android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
-                android:id="@+id/button60"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="60"
+                android:id="@+id/button65"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
+                android:text="65"
+                android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
-                android:id="@+id/button70"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="70"
-                tools:ignore="ButtonStyle,HardcodedText" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/button80"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="80"
+                android:id="@+id/button75"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
+                android:text="75"
+                android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
                 android:id="@+id/button90"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
                 android:text="90"
-                tools:ignore="ButtonStyle,HardcodedText" />
-
-            <Button
-                android:id="@+id/button100"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="100"
-                tools:ignore="ButtonStyle,HardcodedText" />
-
-            <Button
-                android:id="@+id/button120"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="120"
+                android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
         </LinearLayout>
 
-        <Button
-            android:id="@+id/buttonErfassen"
-            style="@android:style/Widget.DeviceDefault.Button.Colored"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="25sp"
-            android:backgroundTint="@color/blue"
-            android:text="@string/erfassenerfassenbutton"
-            android:layout_marginTop="20dp"
-            android:layout_gravity="center"
-            android:padding="20dp"/>
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/button100"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
+                android:text="100"
+                android:textSize="20sp"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button110"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
+                android:text="110"
+                android:textSize="20sp"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center">
+
+            <Button
+                android:id="@+id/buttonFotoMachen"
+                style="@android:style/Widget.DeviceDefault.Button.Colored"
+                android:layout_width="0dp"
+                android:layout_height="70dp"
+                android:layout_weight="3"
+                android:backgroundTint="@color/blue"
+                android:text="@string/foto_machen"
+                android:layout_marginTop="20dp"
+                android:layout_gravity="center"
+                android:padding="15dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="10sp"
+                android:autoSizeMaxTextSize="20sp"
+                android:autoSizeStepGranularity="1sp"/>
+
+            <TextView
+                android:id="@+id/fotoCounter"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/circle_background"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:visibility="gone"
+                android:layout_marginStart="-15dp"
+                android:layout_marginTop="20dp"/>
+
+            <Button
+                android:id="@+id/buttonErfassen"
+                style="@android:style/Widget.DeviceDefault.Button.Colored"
+                android:layout_width="0dp"
+                android:layout_height="70dp"
+                android:layout_weight="5"
+                android:backgroundTint="@color/blue"
+                android:text="@string/erfassenerfassenbutton"
+                android:layout_marginTop="20dp"
+                android:layout_gravity="center"
+                android:padding="20dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="12sp"
+                android:autoSizeMaxTextSize="30sp"
+                android:autoSizeStepGranularity="1sp"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 
     <Button
         android:id="@+id/buttonAbmelden"
-        style="@android:style/Widget.DeviceDefault.Button.Colored"
-        android:layout_width="175dp"
-        android:layout_height="60dp"
+        android:layout_width="120dp"
+        android:layout_height="48dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:backgroundTint="@color/blue"
         android:text="@string/erfassenerfassung_beendenbutton"
         tools:ignore="TextSizeCheck" />
 
