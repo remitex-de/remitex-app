@@ -15,7 +15,7 @@ import java.io.File
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
         private const val DATABASE_NAME = "ContainerDatenbank"
         const val TABLE_NAME = "ContainerFuellmengen"
         const val COLUMN_FAHRERNUMMER = "Fahrernummer"
