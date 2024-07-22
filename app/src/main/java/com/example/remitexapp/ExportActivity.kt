@@ -30,6 +30,7 @@ class ExportActivity : AppCompatActivity() {
     private lateinit var db: DatabaseHelper
     private val scope = CoroutineScope(Dispatchers.IO + Job())
 
+    // Berechtigungs-Launcher für mehrere Berechtigungen
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -76,52 +77,8 @@ class ExportActivity : AppCompatActivity() {
         // Button-Funktionen
         val buttonTransferExport = findViewById<Button>(R.id.buttonTransferExport)
         buttonTransferExport.setOnClickListener {
-            val fahrernummer = fahrernummerSpinner.selectedItem as? String
-            val tag = tagSpinner.selectedItem as? String
-
-            if (fahrernummer == null || tag == null) {
-                showMessageInToolbar("Bitte wählen Sie gültige Optionen aus.")
-                return@setOnClickListener
-            }
-
-            // Überprüfen Sie, ob Daten für die ausgewählten Optionen vorhanden sind
-            val data = db.getSelectedData(fahrernummer, tag)
-            if (data.isEmpty()) {
-                showMessageInToolbar("Keine Daten zum Exportieren verfügbar.")
-                return@setOnClickListener
-            }
-
-            // Prüfen und anfordern der Berechtigungen
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                requestPermissionsLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.READ_MEDIA_IMAGES,
-                        Manifest.permission.READ_MEDIA_VIDEO,
-                        Manifest.permission.READ_MEDIA_AUDIO
-                    )
-                )
-            } else {
-                requestPermissionsLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    )
-                )
-            }
-
-            val uri = exportDataToFile(data)
-            val photoUris = db.getUnexportedPhotoUrisForContainer(this, data)
-
-            uri?.let {
-                db.sendEmailWithAttachments(this, it, photoUris, "c.fluegel@remitex.de")
-
-                // Aktualisieren des Exportdatums in der Datenbank
-                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                val currentDate = sdf.format(Date())
-                db.updateExportDate(fahrernummer, tag, currentDate)
-            }
+            handleExport(fahrernummerSpinner, tagSpinner)
         }
-
 
         val buttonTransferZurueck = findViewById<Button>(R.id.buttonTransferZurueck)
         buttonTransferZurueck.setOnClickListener {
@@ -134,6 +91,56 @@ class ExportActivity : AppCompatActivity() {
         }
     }
 
+    // Methode zur Verarbeitung des Exports
+    private fun handleExport(fahrernummerSpinner: Spinner, tagSpinner: Spinner) {
+        val fahrernummer = fahrernummerSpinner.selectedItem as? String
+        val tag = tagSpinner.selectedItem as? String
+
+        if (fahrernummer == null || tag == null) {
+            showMessageInToolbar("Bitte wählen Sie gültige Optionen aus.")
+            return
+        }
+
+        // Überprüfen Sie, ob Daten für die ausgewählten Optionen vorhanden sind
+        val data = db.getSelectedData(fahrernummer, tag)
+        if (data.isEmpty()) {
+            showMessageInToolbar("Keine Daten zum Exportieren verfügbar.")
+            return
+        }
+
+        // Prüfen und anfordern der Berechtigungen
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionsLauncher.launch(
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.READ_MEDIA_AUDIO
+                )
+            )
+        } else {
+            requestPermissionsLauncher.launch(
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
+            )
+        }
+
+        // Export der Daten und Senden der E-Mail
+        val uri = exportDataToFile(data)
+        val photoUris = db.getUnexportedPhotoUrisForContainer(this, data)
+
+        uri?.let {
+            db.sendEmailWithAttachments(this, it, photoUris, "c.fluegel@remitex.de")
+
+            // Aktualisieren des Exportdatums in der Datenbank
+            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val currentDate = sdf.format(Date())
+            db.updateExportDate(fahrernummer, tag, currentDate)
+        }
+    }
+
+    // Methode zum Exportieren der Daten in eine Datei
     private fun exportDataToFile(data: List<Array<String>>): Uri? {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val fileName = "export_$timeStamp.txt"
@@ -169,6 +176,7 @@ class ExportActivity : AppCompatActivity() {
         scope.cancel() // Coroutine-Scope wird abgebrochen, wenn die Activity zerstört wird
     }
 
+    // Methode zur Anzeige von Meldungen in der Toolbar
     private fun showMessageInToolbar(message: String, onMessageHidden: (() -> Unit)? = null) {
         val toolbarMessage: TextView = findViewById(R.id.toolbar_message)
         toolbarMessage.text = message
