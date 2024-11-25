@@ -101,14 +101,14 @@ class ExportActivity : AppCompatActivity() {
             return
         }
 
-        // Überprüfen Sie, ob Daten für die ausgewählten Optionen vorhanden sind
-        val data = db.getSelectedData(fahrernummer, tag)
+        // Datenbankabfrage mit korrekter Reihenfolge
+        val data = db.getFilteredExportDataOrdered(fahrernummer, tag)
         if (data.isEmpty()) {
             showMessageInToolbar("Keine Daten zum Exportieren verfügbar.")
             return
         }
 
-        // Prüfen und anfordern der Berechtigungen
+        // Berechtigungen anfordern
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestPermissionsLauncher.launch(
                 arrayOf(
@@ -126,49 +126,22 @@ class ExportActivity : AppCompatActivity() {
             )
         }
 
-        // Export der Daten und Senden der E-Mail
-        val uri = exportDataToFile(data)
-        val photoUris = db.getUnexportedPhotoUrisForContainer(this, data)
+        // Exportdatei erstellen
+        val uri = db.exportDataToFile(this, data)
 
+        // Fotos abrufen und E-Mail senden
+        val photoUris = db.getAllPhotoUrisForContainer(this, data)
         uri?.let {
             db.sendEmailWithAttachments(this, it, photoUris, "c.fluegel@remitex.de")
 
-            // Aktualisieren des Exportdatums in der Datenbank
+            // Erfolgsmeldung
+            showMessageInToolbar("Daten erfolgreich exportiert.")
+
+            // Exportdatum in der Datenbank aktualisieren
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
             val currentDate = sdf.format(Date())
             db.updateExportDate(fahrernummer, tag, currentDate)
-        }
-    }
-
-    // Methode zum Exportieren der Daten in eine Datei
-    private fun exportDataToFile(data: List<Array<String>>): Uri? {
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val fileName = "export_$timeStamp.txt"
-
-        val resolver = contentResolver
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-            put(MediaStore.Downloads.MIME_TYPE, "text/plain")
-            put(MediaStore.Downloads.IS_PENDING, 1)
-        }
-
-        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-        uri?.let {
-            resolver.openOutputStream(it)?.use { outputStream ->
-                data.forEach { record ->
-                    outputStream.write((record.joinToString(",") + "\r\n").toByteArray())
-                }
-            }
-
-            contentValues.clear()
-            contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
-            resolver.update(uri, contentValues, null, null)
-
-            showMessageInToolbar("Daten erfolgreich exportiert nach $fileName.")
-        } ?: run {
-            showMessageInToolbar("Fehler beim Exportieren der Daten.")
-        }
-        return uri
+        } ?: showMessageInToolbar("Fehler beim Exportieren der Daten.")
     }
 
     override fun onDestroy() {

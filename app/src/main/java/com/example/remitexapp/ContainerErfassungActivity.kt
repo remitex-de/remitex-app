@@ -19,7 +19,6 @@ import android.provider.Settings
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,7 +42,7 @@ import java.util.Locale
 class ContainerErfassungActivity : AppCompatActivity() {
 
     // Initialisierung der UI-Elemente und Variablen
-    private lateinit var containernummerInput: EditText
+    private lateinit var containernummerInput: TextView
     private lateinit var barcodeView: BarcodeView
     private lateinit var takePictureLauncher: ActivityResultLauncher<Intent>
     private val photos = mutableListOf<Bitmap>()
@@ -77,7 +76,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
         containernummerInput = findViewById(R.id.editTextContainernummer)
         fotoCounter = findViewById(R.id.fotoCounter)
         val fahrernummer = intent.getStringExtra("fahrernummer")
-        val fuellmengeInput = findViewById<EditText>(R.id.editTextFuellmenge)
+        val fuellmengeInput = findViewById<TextView>(R.id.editTextFuellmenge)
         val erfassenButton = findViewById<Button>(R.id.buttonErfassen)
         val abmeldenButton = findViewById<Button>(R.id.buttonAbmelden)
         val scanBarcodeButton = findViewById<Button>(R.id.scanBarcodeButton)
@@ -243,12 +242,12 @@ class ContainerErfassungActivity : AppCompatActivity() {
                     findViewById<Button>(R.id.lightButton).visibility = View.GONE
                     val scannedValue = result.text
                     if (scannedValue.matches(Regex("\\d{5}"))) {
-                        containernummerInput.setText(scannedValue)
+                        containernummerInput.text = scannedValue
                         playBeep()
-                        findViewById<EditText>(R.id.editTextFuellmenge).requestFocus()
-                        (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(containernummerInput.windowToken, 0)
+                        (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager)
+                            .hideSoftInputFromWindow(containernummerInput.windowToken, 0)
                     } else {
-                        showMessageInToolbar("ACHTUNG: Bitte gültige Containernummer scannen oder manuell eintippen.")
+                        showMessageInToolbar("ACHTUNG: Bitte gültige Containernummer scannen.")
                     }
                 }
 
@@ -267,7 +266,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
 
         val buttonClickListener = View.OnClickListener { view ->
             val button = view as Button
-            findViewById<EditText>(R.id.editTextFuellmenge).setText(button.text)
+            findViewById<TextView>(R.id.editTextFuellmenge).text = button.text
         }
 
         buttonIds.forEach { id ->
@@ -276,7 +275,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
     }
 
     // Behandlung des Klicks auf den "Erfassen"-Button
-    private fun handleErfassenButtonClick(dbHelper: DatabaseHelper, fahrernummer: String?, fuellmengeInput: EditText) {
+    private fun handleErfassenButtonClick(dbHelper: DatabaseHelper, fahrernummer: String?, fuellmengeInput: TextView) {
         if (containernummerInput.text.isNullOrEmpty() || fuellmengeInput.text.isNullOrEmpty()) {
             showMessageInToolbar("Beide Felder müssen ausgefüllt sein!")
             return
@@ -393,8 +392,8 @@ class ContainerErfassungActivity : AppCompatActivity() {
 
     // Felder leeren
     private fun clearFields() {
-        containernummerInput.setText("")
-        findViewById<EditText>(R.id.editTextFuellmenge).setText("")
-        containernummerInput.requestFocus()
+        containernummerInput.text = ""
+        findViewById<TextView>(R.id.editTextFuellmenge).text = ""
+        // Entfernen: containernummerInput.requestFocus()
     }
 }

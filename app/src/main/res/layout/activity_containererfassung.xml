@@ -60,12 +60,17 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <EditText
+            <TextView
                 android:id="@+id/editTextContainernummer"
                 android:layout_width="140dp"
                 android:layout_height="58dp"
                 android:hint="@string/erfassencontainernummerhint"
-                android:inputType="number"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:textColor="@color/blue"
+                android:gravity="center_vertical"
                 android:autofillHints="" />
 
             <Button
@@ -93,12 +98,17 @@
             android:layout_height="wrap_content"
             android:visibility="gone" />
 
-        <EditText
+        <TextView
             android:id="@+id/editTextFuellmenge"
             android:layout_width="140dp"
             android:layout_height="58dp"
             android:hint="@string/erfassenfuellmenge_in_prozenthint"
-            android:inputType="number"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:textColor="@color/blue"
+            android:gravity="center_vertical"
             android:autofillHints="" />
 
         <LinearLayout

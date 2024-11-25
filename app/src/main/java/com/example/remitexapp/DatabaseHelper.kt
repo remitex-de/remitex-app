@@ -5,12 +5,15 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.net.Uri
+import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
@@ -46,27 +49,28 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         onCreate(db)
     }
 
-    // Helfermethode zur Cursor-Extraktion
-    @SuppressLint("Range")
-    private fun extractDataFromCursor(cursor: Cursor): Array<String> {
-        val fahrernummer = cursor.getString(cursor.getColumnIndex(COLUMN_FAHRERNUMMER))
-        val containernummer = cursor.getString(cursor.getColumnIndex(COLUMN_CONTAINERNUMMER))
-        val fuellmenge = cursor.getString(cursor.getColumnIndex(COLUMN_FUELLMENGE))
-        val tag = cursor.getString(cursor.getColumnIndex(COLUMN_TAG))
-        val uhrzeit = cursor.getString(cursor.getColumnIndex(COLUMN_UHRZEIT))
-        val exportdatum = cursor.getString(cursor.getColumnIndex(COLUMN_EXPORTDATUM)) ?: ""
-        return arrayOf(fahrernummer, containernummer, fuellmenge, tag, uhrzeit, exportdatum)
-    }
-
     // Auswahlliste der ReExport Activity mit Daten aus der Datenbank füllen
     fun getAllData(): List<Array<String>> {
         val data = mutableListOf<Array<String>>()
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_NAME WHERE $COLUMN_EXPORTDATUM IS NOT NULL ORDER BY $COLUMN_EXPORTDATUM DESC", null)
+        // Nur die gewünschten Spalten auswählen, ohne Exportdatum und photo_uris
+        val cursor = db.rawQuery(
+            "SELECT $COLUMN_FAHRERNUMMER, $COLUMN_CONTAINERNUMMER, $COLUMN_FUELLMENGE, $COLUMN_TAG, $COLUMN_UHRZEIT FROM $TABLE_NAME WHERE $COLUMN_EXPORTDATUM IS NOT NULL ORDER BY $COLUMN_EXPORTDATUM DESC",
+            null
+        )
         cursor.use {
             if (it.moveToFirst()) {
                 do {
-                    data.add(extractDataFromCursor(it))
+                    // Extrahiere alle relevanten Spalten in der korrekten Reihenfolge
+                    data.add(
+                        arrayOf(
+                            it.getString(it.getColumnIndexOrThrow(COLUMN_FAHRERNUMMER)),
+                            it.getString(it.getColumnIndexOrThrow(COLUMN_CONTAINERNUMMER)),
+                            it.getString(it.getColumnIndexOrThrow(COLUMN_FUELLMENGE)),
+                            it.getString(it.getColumnIndexOrThrow(COLUMN_TAG)),
+                            it.getString(it.getColumnIndexOrThrow(COLUMN_UHRZEIT))
+                        )
+                    )
                 } while (it.moveToNext())
             }
         }
@@ -74,7 +78,50 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return data
     }
 
+    // Gefilterte Daten für den Export bereitstellen
+    @SuppressLint("Range")
+    fun getFilteredExportDataOrdered(fahrernummer: String, tag: String): List<Array<String>> {
+        val db = this.readableDatabase
+        val query = """
+        SELECT Fahrernummer, Containernummer, Fuellmenge, 
+               Tag, Uhrzeit
+        FROM ContainerFuellmengen
+        WHERE Fahrernummer = ? AND Tag = ?
+    """
+        val cursor = db.rawQuery(query, arrayOf(fahrernummer, tag))
+        val data = mutableListOf<Array<String>>()
+
+        if (cursor.moveToFirst()) {
+            do {
+                val record = arrayOf(
+                    cursor.getString(cursor.getColumnIndexOrThrow("Fahrernummer")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("Containernummer")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("Fuellmenge")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("Tag")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("Uhrzeit"))
+                )
+                data.add(record)
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        db.close()
+        return data
+    }
+
+
+    // Spalten-Indexe für Tag, Uhrzeit, Fahrernummer, Containernummer, Fuellmenge für ReExport Activity
+    fun filterAndFormatDataForListView(data: List<Array<String>>): List<String> {
+        val columnIndices = listOf(0, 1, 2, 3, 4) // Passen Sie die Indizes an die Reihenfolge in der Datenbank an
+        return data.map { record ->
+            columnIndices.joinToString(", ") { index ->
+                record[index]
+            }
+        }
+    }
+
     // Fahrernummer Spinner Filter in ExportActivity mit Werten der Datenbank füllen
+    @SuppressLint("Range")
     fun getAllFahrernummern(): List<String> {
         val fahrernummern = mutableListOf<String>()
         val db = this.readableDatabase
@@ -92,6 +139,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     // Daten im Datum Spinner Filter in ExportActivity basierend auf der ausgewählten Fahrernummer filtern und in den Spinner füllen
+    @SuppressLint("Range")
     fun getTagsForFahrernummer(fahrernummer: String): List<String> {
         val tags = mutableListOf<String>()
         val db = this.readableDatabase
@@ -106,22 +154,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         cursor.close()
         db.close()
         return tags
-    }
-
-    // Gefilterte Daten für den Export bereitstellen
-    fun getSelectedData(fahrernummer: String, tag: String): List<Array<String>> {
-        val data = mutableListOf<Array<String>>()
-        val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_NAME WHERE $COLUMN_FAHRERNUMMER = ? AND $COLUMN_TAG = ?", arrayOf(fahrernummer, tag))
-        cursor.use {
-            if (it.moveToFirst()) {
-                do {
-                    data.add(extractDataFromCursor(it))
-                } while (it.moveToNext())
-            }
-        }
-        db.close()
-        return data
     }
 
     // Exportdatum in der Datenbank aktualisieren
@@ -191,11 +223,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return getPhotoUris(context, data) { containernummer -> getAllPhotosForContainer(containernummer) }
     }
 
-    // Methode, um nur Containerfotos zu bekommen, die noch nicht exportiert wurden
-    fun getUnexportedPhotoUrisForContainer(context: Context, data: List<Array<String>>): List<Uri> {
-        return getPhotoUris(context, data) { containernummer -> getPhotosForContainer(containernummer) }
-    }
-
     // Gemeinsame Logik zum Abrufen von Foto-URIs
     private fun getPhotoUris(context: Context, data: List<Array<String>>, photoRetriever: (String) -> List<String>): List<Uri> {
         val photoUris = mutableListOf<Uri>()
@@ -214,6 +241,35 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         }
         return photoUris
     }
+
+    // Methode zum Exportieren der Daten in eine Datei
+    fun exportDataToFile(context: Context, data: List<Array<String>>): Uri? {
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "export_$timeStamp.txt"
+
+        val resolver = context.contentResolver
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+            put(MediaStore.Downloads.MIME_TYPE, "text/plain")
+            put(MediaStore.Downloads.IS_PENDING, 1)
+        }
+
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+        uri?.let {
+            resolver.openOutputStream(it)?.use { outputStream ->
+                data.forEach { record ->
+                    outputStream.write((record.joinToString(",") + "\r\n").toByteArray())
+                }
+            }
+
+            contentValues.clear()
+            contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+            resolver.update(uri, contentValues, null, null)
+        }
+
+        return uri
+    }
+
 
     // Methode, um E-Mail mit Anhängen zu senden
     fun sendEmailWithAttachments(context: Context, uri: Uri, photoUris: List<Uri>, emailAddress: String) {
@@ -242,7 +298,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     // Methode, um alle Fotos eines Containers zu bekommen, unabhängig vom Exportdatum
-    fun getAllPhotosForContainer(containernummer: String): List<String> {
+    private fun getAllPhotosForContainer(containernummer: String): List<String> {
         return getPhotoUrisForQuery("SELECT $COLUMN_PHOTO_URIS FROM $TABLE_NAME WHERE $COLUMN_CONTAINERNUMMER = ?", arrayOf(containernummer))
     }
 
