@@ -1,14 +1,11 @@
 package com.example.remitexapp
 
 import android.Manifest
-import android.content.ContentValues
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.MediaStore
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
