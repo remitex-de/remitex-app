@@ -3,6 +3,7 @@ package com.example.remitexapp
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -16,28 +17,24 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
 import com.google.zxing.ResultPoint
 import com.journeyapps.barcodescanner.BarcodeCallback
 import com.journeyapps.barcodescanner.BarcodeResult
 import com.journeyapps.barcodescanner.BarcodeView
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Date
-import java.util.Locale
 
 class ContainerErfassungActivity : AppCompatActivity() {
 
@@ -45,21 +42,70 @@ class ContainerErfassungActivity : AppCompatActivity() {
     private lateinit var containernummerInput: TextView
     private lateinit var barcodeView: BarcodeView
     private lateinit var takePictureLauncher: ActivityResultLauncher<Intent>
-    private val photos = mutableListOf<Bitmap>()
+    private val photos = mutableListOf<Uri>()
     private lateinit var fotoCounter: TextView
-    private lateinit var currentPhotoPath: String
+    private var currentPhotoUri: Uri? = null
 
     // Berechtigungs-Launcher für mehrere Berechtigungen
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        permissions.entries.forEach {
-            val isGranted = it.value
-            if (!isGranted) {
-                showMessageInToolbar("Berechtigungen sind erforderlich, um fortzufahren.")
+        // Berechtigungen prüfen und auf fehlende Berechtigungen reagieren
+        permissions.forEach { (permission, isGranted) ->
+            when (permission) {
+                Manifest.permission.READ_MEDIA_IMAGES -> {
+                    if (!isGranted) {
+                        showMessageInToolbar("Zugriff auf Fotos wurde eingeschränkt. Einige Funktionen könnten nicht verfügbar sein.")
+                    }
+                }
+                Manifest.permission.CAMERA -> {
+                    if (!isGranted) {
+                        showMessageInToolbar("Kameraberechtigung erforderlich, um Fotos aufzunehmen.")
+                    }
+                }
             }
         }
+
+        // Fehlende Berechtigungen melden
+        //val missingPermissions = permissions.filter { !it.value }.keys
+        //if (missingPermissions.isNotEmpty()) {
+        //    showMessageInToolbar("Nicht alle Berechtigungen wurden erteilt. Einschränkungen möglich.")
+        //}
     }
+
+    // Methode zur Berechtigungsprüfung und -anfrage
+    private fun checkAndRequestPermissions() {
+        val essentialPermissions = mutableListOf<String>()
+
+        // Kamera-Berechtigung für alle Versionen
+        essentialPermissions.add(Manifest.permission.CAMERA)
+
+        // WRITE_EXTERNAL_STORAGE für API <= 29
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+            essentialPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+
+        // READ_MEDIA_IMAGES für API >= 33 (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            essentialPermissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+        }
+
+        // READ_MEDIA_VISUAL_USER_SELECTED für API >= 34 (Android 14+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            essentialPermissions.add(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+        }
+
+        // Fehlende Berechtigungen filtern
+        val missingPermissions = essentialPermissions.filter {
+            checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        // Berechtigungen anfragen, falls erforderlich
+        if (missingPermissions.isNotEmpty()) {
+            requestPermissionsLauncher.launch(missingPermissions.toTypedArray())
+        }
+    }
+
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,7 +122,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
         containernummerInput = findViewById(R.id.editTextContainernummer)
         fotoCounter = findViewById(R.id.fotoCounter)
         val fahrernummer = intent.getStringExtra("fahrernummer")
-        val fuellmengeInput = findViewById<TextView>(R.id.editTextFuellmenge)
+        val fuellmengeInput = findViewById<EditText>(R.id.editTextFuellmenge)
         val erfassenButton = findViewById<Button>(R.id.buttonErfassen)
         val abmeldenButton = findViewById<Button>(R.id.buttonAbmelden)
         val scanBarcodeButton = findViewById<Button>(R.id.scanBarcodeButton)
@@ -101,13 +147,22 @@ class ContainerErfassungActivity : AppCompatActivity() {
 
         // Registrierung des ActivityResultLaunchers für das Aufnehmen von Fotos
         takePictureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            handlePictureResult(result.resultCode)
+            handlePictureResult(result.resultCode) // Pass result.data to handlePictureResult
         }
 
         // Klick-Listener für den "Foto machen"-Button
         buttonFotoMachen.setOnClickListener {
+            Log.d("PermissionsCheck", "CAMERA granted: ${checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED}")
+            Log.d("PermissionsCheck", "READ_MEDIA_IMAGES granted: ${
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
+                } else {
+                    "N/A (Not required)"
+                }
+            }")
             dispatchTakePictureIntent()
         }
+
 
         // Klick-Listener für den "Erfassen"-Button
         erfassenButton.setOnClickListener {
@@ -129,42 +184,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         barcodeView.pause() // Barcode-Scanner pausieren
-    }
-
-    // Überprüfung und Anforderung der Berechtigungen
-    private fun checkAndRequestPermissions() {
-        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        } else {
-            arrayOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        }
-
-        if (permissions.any { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }) {
-            requestPermissionsLauncher.launch(permissions)
-        }
-    }
-
-    // Temporäre Fotodatei erstellen
-    @Throws(IOException::class)
-    private fun createImageFile(): File {
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir).apply {
-            currentPhotoPath = absolutePath
-        }
-    }
-
-    // Uri für die Datei erhalten
-    private fun getUriForFile(file: File): Uri {
-        return FileProvider.getUriForFile(this, "com.example.remitexapp.fileprovider", file)
     }
 
     // Nachricht in der Toolbar anzeigen
@@ -189,42 +208,132 @@ class ContainerErfassungActivity : AppCompatActivity() {
         }
     }
 
+    private fun hasRequiredPermissions(): Boolean {
+        val cameraPermissionGranted = checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        val readMediaImagesPermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+        return cameraPermissionGranted && readMediaImagesPermissionGranted
+    }
+
     // Intent zum Aufnehmen eines Fotos starten
     private fun dispatchTakePictureIntent() {
-        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        takePictureIntent.resolveActivity(packageManager)?.also {
-            val photoFile: File? = try {
-                createImageFile()
-            } catch (ex: IOException) {
-                null
-            }
-            photoFile?.also {
-                val photoURI: Uri = getUriForFile(it)
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-                takePictureLauncher.launch(takePictureIntent)
-            }
+        if (!hasRequiredPermissions()) {
+            showMessageInToolbar("Fotoaufnahme nicht möglich: Fehlende Berechtigungen.")
+            checkAndRequestPermissions()
+            return
         }
+
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        createImageUri()?.let { uri ->
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
+            // Store the URI for later use in handlePictureResult
+            currentPhotoUri = uri
+            takePictureLauncher.launch(takePictureIntent)
+        } ?: run {
+            Log.e("CameraIntent", "Fehler beim Erstellen der Bild-URI.")
+            showMessageInToolbar("Fehler beim Erstellen der Bilddatei.")
+        }
+    }
+
+    private fun createImageUri(): Uri? {
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "image_${System.currentTimeMillis()}.jpg")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+        }
+
+        return contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
     }
 
     // Behandlung des Ergebnisses der Fotoaufnahme
     private fun handlePictureResult(resultCode: Int) {
         if (resultCode == Activity.RESULT_OK) {
-            val bitmap = BitmapFactory.decodeFile(currentPhotoPath)
-            bitmap?.let {
+            val imageUri = currentPhotoUri // Get the image URI from the result data
+
+            imageUri?.let { uri ->
                 AlertDialog.Builder(this)
                     .setTitle("Foto Bestätigung")
                     .setMessage("Ist das aufgenommene Foto in Ordnung?")
                     .setPositiveButton("Ja") { _, _ ->
-                        photos.add(it)
+                        photos.add(uri) // Add the URI to the list
                         fotoCounter.text = photos.size.toString()
                         fotoCounter.visibility = View.VISIBLE
                     }
                     .setNegativeButton("Nein") { _, _ ->
-                        File(currentPhotoPath).delete()
+                        // Delete the image from MediaStore
+                        contentResolver.delete(uri, null, null)
                     }
                     .show()
             }
+            currentPhotoUri = null
         }
+    }
+
+    // Fotos speichern und komprimieren
+    private fun saveAndCompressPhotos(containernummer: Int): MutableList<String> {
+        val photoUris = mutableListOf<String>()
+        val directory = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ContainerFotos")
+
+        if (!directory.exists() && !directory.mkdirs()) {
+            Log.e("PhotoHandler", "Fehler beim Erstellen des Verzeichnisses: $directory")
+            return photoUris
+        }
+
+        photos.forEachIndexed { index, uri -> // uri is already of type Uri
+            try {
+                val inputStream = contentResolver.openInputStream(uri) // No need to cast
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                inputStream?.close()
+
+                bitmap?.let {
+                    val filename = if (index == 0) {
+                        "${containernummer}.jpg"
+                    } else {
+                        "${containernummer}_$index.jpg"
+                    }
+
+                    val file = File(directory, filename)
+                    var quality = 90
+
+                    try {
+                        file.outputStream().use { outputStream ->
+                            var compressed = false
+                            do {
+                                val byteArrayOutputStream = ByteArrayOutputStream()
+                                bitmap.compress(
+                                    Bitmap.CompressFormat.JPEG,
+                                    quality,
+                                    byteArrayOutputStream
+                                )
+                                val byteArray = byteArrayOutputStream.toByteArray()
+
+                                if (byteArray.size / 1024 < 300) {
+                                    outputStream.write(byteArray)
+                                    compressed = true
+                                } else {
+                                    quality -= 10
+                                }
+                            } while (!compressed && quality > 10)
+                        }
+
+                        photoUris.add(file.absolutePath)
+                    } catch (e: Exception) {
+                        Log.e("PhotoHandler", "Fehler beim Speichern des Fotos: ${e.message}")
+                        // Consider showing an error message to the user here
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("SaveAndCompressPhotos", "Fehler beim Laden des Bildes: ${e.message}")
+                showMessageInToolbar("Fehler beim Laden des Bildes.")
+            }
+        }
+
+        photos.clear()
+        fotoCounter.visibility = View.GONE
+        return photoUris // Moved outside the loop
     }
 
     // Barcode-Scanner umschalten
@@ -259,9 +368,9 @@ class ContainerErfassungActivity : AppCompatActivity() {
     // Setup der Button-Listener für die Eingabetasten
     private fun setupButtonListeners() {
         val buttonIds = listOf(
-            R.id.button0, R.id.button15, R.id.button25, R.id.button35,
-            R.id.button50, R.id.button65, R.id.button75, R.id.button90,
-            R.id.button100, R.id.button110
+            R.id.button0, R.id.button5, R.id.button10, R.id.button15,
+            R.id.button25, R.id.button35, R.id.button50, R.id.button65,
+            R.id.button75, R.id.button90, R.id.button100, R.id.button110
         )
 
         val buttonClickListener = View.OnClickListener { view ->
@@ -274,7 +383,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
         }
     }
 
-    // Behandlung des Klicks auf den "Erfassen"-Button
+    // Behandlung des Klicks auf den "Speichern"-Button
     private fun handleErfassenButtonClick(dbHelper: DatabaseHelper, fahrernummer: String?, fuellmengeInput: TextView) {
         if (containernummerInput.text.isNullOrEmpty() || fuellmengeInput.text.isNullOrEmpty()) {
             showMessageInToolbar("Beide Felder müssen ausgefüllt sein!")
@@ -308,55 +417,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
 
             clearFields()
         }
-    }
-
-    // Fotos speichern und komprimieren
-    private fun saveAndCompressPhotos(containernummer: Int): MutableList<String> {
-        val photoUris = mutableListOf<String>()
-        val directory = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ContainerFotos")
-
-        if (!directory.exists()) {
-            directory.mkdirs()
-        }
-
-        photos.forEachIndexed { index, bitmap ->
-            val filename = if (index == 0) {
-                "${containernummer}.jpg"
-            } else {
-                "${containernummer}_$index.jpg"
-            }
-
-            val file = File(directory, filename)
-            var quality = 90
-            var fileOutputStream: FileOutputStream? = null
-
-            do {
-                try {
-                    fileOutputStream = FileOutputStream(file)
-                    val byteArrayOutputStream = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, quality, byteArrayOutputStream)
-                    val byteArray = byteArrayOutputStream.toByteArray()
-
-                    if (byteArray.size / 1024 < 300) {
-                        fileOutputStream.write(byteArray)
-                        fileOutputStream.close()
-                        break
-                    } else {
-                        quality -= 10
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    fileOutputStream?.close()
-                }
-            } while (quality > 10)
-
-            photoUris.add(file.absolutePath)
-        }
-
-        photos.clear()
-        fotoCounter.visibility = View.GONE
-        return photoUris
     }
 
     // Dialog zum Aktualisieren der Datensätze anzeigen

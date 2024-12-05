@@ -8,12 +8,16 @@ import android.content.pm.PackageManager
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.Manifest
+import android.os.Environment
+import android.util.Log
 
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
@@ -192,7 +196,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_FUELLMENGE, fuellmenge)
             put(COLUMN_TAG, tag)
             put(COLUMN_UHRZEIT, uhrzeit)
-            put(COLUMN_PHOTO_URIS, photoUris?.joinToString(","))
+            put(COLUMN_PHOTO_URIS, photoUris?.joinToString(",") { File(it).absolutePath })
         }
         return db.insert(TABLE_NAME, null, contentValues)
     }
@@ -213,14 +217,23 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_FUELLMENGE, fuellmenge)
             put(COLUMN_TAG, tag)
             put(COLUMN_UHRZEIT, uhrzeit)
-            put(COLUMN_PHOTO_URIS, photoUris?.joinToString(","))
+            put(COLUMN_PHOTO_URIS, photoUris?.joinToString(",") { File(it).absolutePath })
         }
         return db.update(TABLE_NAME, contentValues, "$COLUMN_CONTAINERNUMMER = ? AND $COLUMN_TAG = ?", arrayOf(containernummer, tag))
     }
 
     // Methode, um Containerfotos für alle Exporte zu bekommen
     fun getAllPhotoUrisForContainer(context: Context, data: List<Array<String>>): List<Uri> {
-        return getPhotoUris(context, data) { containernummer -> getAllPhotosForContainer(containernummer) }
+        val containerNumbers = data.map { it[1] } // Assuming containernummer is at index 1
+        val photoDirectory = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ContainerFotos")
+
+        return containerNumbers.flatMap { containernummer ->
+            photoDirectory.listFiles { file ->
+                file.name.startsWith(containernummer) && file.name.endsWith(".jpg")
+            }?.map { file ->
+                FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            } ?: emptyList()
+        }
     }
 
     // Gemeinsame Logik zum Abrufen von Foto-URIs
@@ -277,10 +290,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             type = "vnd.android.cursor.dir/email"
             putExtra(Intent.EXTRA_EMAIL, arrayOf(emailAddress))
             putExtra(Intent.EXTRA_SUBJECT, "Scan-Datenexport")
-            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList<Uri>().apply {
-                add(uri)
-                addAll(photoUris)
-            })
+            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList<Uri>(listOf(uri) + photoUris))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
@@ -298,31 +308,39 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     // Methode, um alle Fotos eines Containers zu bekommen, unabhängig vom Exportdatum
-    private fun getAllPhotosForContainer(containernummer: String): List<String> {
-        return getPhotoUrisForQuery("SELECT $COLUMN_PHOTO_URIS FROM $TABLE_NAME WHERE $COLUMN_CONTAINERNUMMER = ?", arrayOf(containernummer))
+    private fun getAllPhotosForContainer(context: Context, containernummer: String): List<String> {
+        return getPhotoUrisForQuery(context, arrayOf(containernummer))
     }
 
-    // Containerfotos für noch nicht exportierte Datensätze einbeziehen
-    fun getPhotosForContainer(containernummer: String): List<String> {
-        return getPhotoUrisForQuery("SELECT $COLUMN_PHOTO_URIS FROM $TABLE_NAME WHERE $COLUMN_CONTAINERNUMMER = ? AND ($COLUMN_EXPORTDATUM IS NULL OR $COLUMN_EXPORTDATUM = '')", arrayOf(containernummer))
-    }
 
-    // Gemeinsame Logik zum Abrufen von Foto-URIs für eine Abfrage
-    private fun getPhotoUrisForQuery(query: String, selectionArgs: Array<String>): List<String> {
+    // Logik zum Abrufen von Foto-URIs für eine Abfrage
+    private fun getPhotoUrisForQuery(context: Context, selectionArgs: Array<String>): List<String> {
         val photos = mutableListOf<String>()
-        val db = this.readableDatabase
-        val cursor = db.rawQuery(query, selectionArgs)
 
-        if (cursor.moveToFirst()) {
-            val columnIndex = cursor.getColumnIndex(COLUMN_PHOTO_URIS)
-            if (columnIndex >= 0) {
-                val photoUris = cursor.getString(columnIndex)
-                photos.addAll(photoUris.split(","))
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            context.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED) {
+
+            val db = this.readableDatabase
+            val cursor = db.rawQuery(
+                "SELECT $COLUMN_PHOTO_URIS FROM $TABLE_NAME WHERE $COLUMN_CONTAINERNUMMER = ?",
+                selectionArgs
+            )
+
+            if (cursor.moveToFirst()) {
+                val columnIndex = cursor.getColumnIndex(COLUMN_PHOTO_URIS)
+                if (columnIndex >= 0) {
+                    val photoUris = cursor.getString(columnIndex)
+                    photos.addAll(photoUris.split(","))
+                }
             }
+
+            cursor.close()
+            db.close()
+        } else {
+            // Fehlende Berechtigung protokollieren
+            Log.w("DatabaseHelper", "Kein Zugriff auf Fotos. Berechtigungen erforderlich.")
         }
 
-        cursor.close()
-        db.close()
         return photos
     }
 }

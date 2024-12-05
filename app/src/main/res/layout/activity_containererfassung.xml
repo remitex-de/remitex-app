@@ -103,13 +103,14 @@
             android:layout_width="140dp"
             android:layout_height="58dp"
             android:hint="@string/erfassenfuellmenge_in_prozenthint"
+            android:importantForAutofill="no"
             android:textSize="20sp"
             android:textStyle="bold"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
             android:textColor="@color/blue"
             android:gravity="center_vertical"
-            android:autofillHints="" />
+            android:maxLength="3" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -126,6 +127,24 @@
                 tools:ignore="ButtonStyle,HardcodedText" />
 
             <Button
+                android:id="@+id/button5"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
+                android:text="5"
+                android:textSize="20sp"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
+                android:id="@+id/button10"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_weight="1"
+                android:text="10"
+                android:textSize="20sp"
+                tools:ignore="ButtonStyle,HardcodedText" />
+
+            <Button
                 android:id="@+id/button15"
                 android:layout_width="0dp"
                 android:layout_height="75dp"
@@ -133,6 +152,13 @@
                 android:text="15"
                 android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
             <Button
                 android:id="@+id/button25"
@@ -152,13 +178,6 @@
                 android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
             <Button
                 android:id="@+id/button50"
                 android:layout_width="0dp"
@@ -177,6 +196,13 @@
                 android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
 
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
             <Button
                 android:id="@+id/button75"
                 android:layout_width="0dp"
@@ -194,13 +220,6 @@
                 android:text="90"
                 android:textSize="20sp"
                 tools:ignore="ButtonStyle,HardcodedText" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
 
             <Button
                 android:id="@+id/button100"

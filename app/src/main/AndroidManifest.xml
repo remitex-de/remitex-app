@@ -14,11 +14,21 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
+    <!-- Kamera-Berechtigung -->
     <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Berechtigungen für den Zugriff auf Medien -->
+    <!-- Für Android 12L (API-Level 32) und niedriger -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Für Android 13 (API-Level 33) und höher -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- Für Android 14 (API-Level 34) und höher -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
 
     <application
         android:name=".MyApplication"
@@ -31,7 +41,7 @@
         android:theme="@style/Theme.FahrernummerEingabe"
         tools:targetApi="31">
 
-        <!-- FileProvider definition -->
+        <!-- FileProvider für Dateien -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -42,6 +52,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Activities -->
         <activity
             android:name=".ReExportActivity"
             android:exported="false"
