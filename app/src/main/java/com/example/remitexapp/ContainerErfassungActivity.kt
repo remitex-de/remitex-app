@@ -122,7 +122,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
         containernummerInput = findViewById(R.id.editTextContainernummer)
         fotoCounter = findViewById(R.id.fotoCounter)
         val fahrernummer = intent.getStringExtra("fahrernummer")
-        val fuellmengeInput = findViewById<EditText>(R.id.editTextFuellmenge)
+        val fuellmengeInput = findViewById<TextView>(R.id.editTextFuellmenge)
         val erfassenButton = findViewById<Button>(R.id.buttonErfassen)
         val abmeldenButton = findViewById<Button>(R.id.buttonAbmelden)
         val scanBarcodeButton = findViewById<Button>(R.id.scanBarcodeButton)

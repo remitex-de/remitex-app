@@ -21,7 +21,7 @@ android {
         applicationId "com.example.remitexapp"
         minSdk 29
         targetSdk 34
-        versionCode 15
+        versionCode 17
         versionName "1.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
