@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="remitexapp">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-29T14:45:24.528830Z">
+        <DropdownSelection timestamp="2025-06-09T20:09:24.742058200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\m.mischon\.android\avd\Pixel_8a_API_34.avd" />
