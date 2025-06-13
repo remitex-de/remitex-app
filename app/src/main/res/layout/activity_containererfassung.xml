@@ -60,11 +60,13 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <TextView
+            <EditText
                 android:id="@+id/editTextContainernummer"
                 android:layout_width="140dp"
                 android:layout_height="58dp"
                 android:hint="@string/erfassencontainernummerhint"
+                android:inputType="number"
+                android:maxLength="5"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:paddingStart="4dp"

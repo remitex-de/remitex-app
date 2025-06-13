@@ -27,6 +27,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import com.google.zxing.ResultPoint
 import com.journeyapps.barcodescanner.BarcodeCallback
 import com.journeyapps.barcodescanner.BarcodeResult
@@ -38,19 +39,16 @@ import java.time.format.DateTimeFormatter
 
 class ContainerErfassungActivity : AppCompatActivity() {
 
-    // Initialisierung der UI-Elemente und Variablen
-    private lateinit var containernummerInput: TextView
+    private lateinit var containernummerInput: EditText
     private lateinit var barcodeView: BarcodeView
     private lateinit var takePictureLauncher: ActivityResultLauncher<Intent>
     private val photos = mutableListOf<Uri>()
     private lateinit var fotoCounter: TextView
     private var currentPhotoUri: Uri? = null
 
-    // Berechtigungs-Launcher für mehrere Berechtigungen
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        // Berechtigungen prüfen und auf fehlende Berechtigungen reagieren
         permissions.forEach { (permission, isGranted) ->
             when (permission) {
                 Manifest.permission.READ_MEDIA_IMAGES -> {
@@ -65,60 +63,43 @@ class ContainerErfassungActivity : AppCompatActivity() {
                 }
             }
         }
-
-        // Fehlende Berechtigungen melden
-        //val missingPermissions = permissions.filter { !it.value }.keys
-        //if (missingPermissions.isNotEmpty()) {
-        //    showMessageInToolbar("Nicht alle Berechtigungen wurden erteilt. Einschränkungen möglich.")
-        //}
     }
 
-    // Methode zur Berechtigungsprüfung und -anfrage
     private fun checkAndRequestPermissions() {
         val essentialPermissions = mutableListOf<String>()
 
-        // Kamera-Berechtigung für alle Versionen
         essentialPermissions.add(Manifest.permission.CAMERA)
 
-        // WRITE_EXTERNAL_STORAGE für API <= 29
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             essentialPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
 
-        // READ_MEDIA_IMAGES für API >= 33 (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             essentialPermissions.add(Manifest.permission.READ_MEDIA_IMAGES)
         }
 
-        // READ_MEDIA_VISUAL_USER_SELECTED für API >= 34 (Android 14+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             essentialPermissions.add(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
         }
 
-        // Fehlende Berechtigungen filtern
         val missingPermissions = essentialPermissions.filter {
             checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
         }
 
-        // Berechtigungen anfragen, falls erforderlich
         if (missingPermissions.isNotEmpty()) {
             requestPermissionsLauncher.launch(missingPermissions.toTypedArray())
         }
     }
-
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_containererfassung)
 
-        // Initialisierung des Datenbank-Helpers
         val dbHelper = DatabaseHelper(this)
 
-        // Berechtigungen überprüfen und anfordern
         checkAndRequestPermissions()
 
-        // UI-Elemente initialisieren
         containernummerInput = findViewById(R.id.editTextContainernummer)
         fotoCounter = findViewById(R.id.fotoCounter)
         val fahrernummer = intent.getStringExtra("fahrernummer")
@@ -131,26 +112,21 @@ class ContainerErfassungActivity : AppCompatActivity() {
         barcodeView = findViewById(R.id.barcode_view)
         var isFlashOn = false
 
-        // Taschenlampenfunktion ein- und ausschalten
         lightButton.setOnClickListener {
             isFlashOn = !isFlashOn
             barcodeView.setTorch(isFlashOn)
         }
 
-        // Barcode-Scanner umschalten
         scanBarcodeButton.setOnClickListener {
             toggleBarcodeScanner()
         }
 
-        // Listener für die Eingabetasten setzen
         setupButtonListeners()
 
-        // Registrierung des ActivityResultLaunchers für das Aufnehmen von Fotos
         takePictureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            handlePictureResult(result.resultCode) // Pass result.data to handlePictureResult
+            handlePictureResult(result.resultCode)
         }
 
-        // Klick-Listener für den "Foto machen"-Button
         buttonFotoMachen.setOnClickListener {
             Log.d("PermissionsCheck", "CAMERA granted: ${checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED}")
             Log.d("PermissionsCheck", "READ_MEDIA_IMAGES granted: ${
@@ -163,13 +139,10 @@ class ContainerErfassungActivity : AppCompatActivity() {
             dispatchTakePictureIntent()
         }
 
-
-        // Klick-Listener für den "Erfassen"-Button
         erfassenButton.setOnClickListener {
             handleErfassenButtonClick(dbHelper, fahrernummer, fuellmengeInput)
         }
 
-        // Klick-Listener für den "Abmelden"-Button
         abmeldenButton.setOnClickListener {
             startActivity(Intent(this, FahrernummerEingabeActivity::class.java))
             finish()
@@ -178,27 +151,25 @@ class ContainerErfassungActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        barcodeView.resume() // Barcode-Scanner fortsetzen
+        barcodeView.resume()
     }
 
     override fun onPause() {
         super.onPause()
-        barcodeView.pause() // Barcode-Scanner pausieren
+        barcodeView.pause()
     }
 
-    // Nachricht in der Toolbar anzeigen
     private fun showMessageInToolbar(message: String, onMessageHidden: (() -> Unit)? = null) {
         val toolbarMessage: TextView = findViewById(R.id.toolbar_message)
         toolbarMessage.text = message
-        toolbarMessage.visibility = View.VISIBLE
+        toolbarMessage.isVisible = true
 
         Handler(Looper.getMainLooper()).postDelayed({
-            toolbarMessage.visibility = View.GONE
+            toolbarMessage.isVisible = false
             onMessageHidden?.invoke()
         }, 3000)
     }
 
-    // Ton abspielen, wenn Barcode erfolgreich gescannt wurde
     private fun playBeep() {
         try {
             val notification = MediaPlayer.create(this, Settings.System.DEFAULT_NOTIFICATION_URI)
@@ -218,7 +189,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
         return cameraPermissionGranted && readMediaImagesPermissionGranted
     }
 
-    // Intent zum Aufnehmen eines Fotos starten
     private fun dispatchTakePictureIntent() {
         if (!hasRequiredPermissions()) {
             showMessageInToolbar("Fotoaufnahme nicht möglich: Fehlende Berechtigungen.")
@@ -229,7 +199,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         createImageUri()?.let { uri ->
             takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
-            // Store the URI for later use in handlePictureResult
             currentPhotoUri = uri
             takePictureLauncher.launch(takePictureIntent)
         } ?: run {
@@ -248,22 +217,20 @@ class ContainerErfassungActivity : AppCompatActivity() {
         return contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
     }
 
-    // Behandlung des Ergebnisses der Fotoaufnahme
     private fun handlePictureResult(resultCode: Int) {
         if (resultCode == Activity.RESULT_OK) {
-            val imageUri = currentPhotoUri // Get the image URI from the result data
+            val imageUri = currentPhotoUri
 
             imageUri?.let { uri ->
                 AlertDialog.Builder(this)
                     .setTitle("Foto Bestätigung")
                     .setMessage("Ist das aufgenommene Foto in Ordnung?")
                     .setPositiveButton("Ja") { _, _ ->
-                        photos.add(uri) // Add the URI to the list
+                        photos.add(uri)
                         fotoCounter.text = photos.size.toString()
-                        fotoCounter.visibility = View.VISIBLE
+                        fotoCounter.isVisible = true
                     }
                     .setNegativeButton("Nein") { _, _ ->
-                        // Delete the image from MediaStore
                         contentResolver.delete(uri, null, null)
                     }
                     .show()
@@ -272,7 +239,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
         }
     }
 
-    // Fotos speichern und komprimieren
     private fun saveAndCompressPhotos(containernummer: Int): MutableList<String> {
         val photoUris = mutableListOf<String>()
         val directory = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ContainerFotos")
@@ -282,9 +248,9 @@ class ContainerErfassungActivity : AppCompatActivity() {
             return photoUris
         }
 
-        photos.forEachIndexed { index, uri -> // uri is already of type Uri
+        photos.forEachIndexed { index, uri ->
             try {
-                val inputStream = contentResolver.openInputStream(uri) // No need to cast
+                val inputStream = contentResolver.openInputStream(uri)
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 inputStream?.close()
 
@@ -303,11 +269,7 @@ class ContainerErfassungActivity : AppCompatActivity() {
                             var compressed = false
                             do {
                                 val byteArrayOutputStream = ByteArrayOutputStream()
-                                bitmap.compress(
-                                    Bitmap.CompressFormat.JPEG,
-                                    quality,
-                                    byteArrayOutputStream
-                                )
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, byteArrayOutputStream)
                                 val byteArray = byteArrayOutputStream.toByteArray()
 
                                 if (byteArray.size / 1024 < 300) {
@@ -322,7 +284,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
                         photoUris.add(file.absolutePath)
                     } catch (e: Exception) {
                         Log.e("PhotoHandler", "Fehler beim Speichern des Fotos: ${e.message}")
-                        // Consider showing an error message to the user here
                     }
                 }
             } catch (e: Exception) {
@@ -332,26 +293,25 @@ class ContainerErfassungActivity : AppCompatActivity() {
         }
 
         photos.clear()
-        fotoCounter.visibility = View.GONE
-        return photoUris // Moved outside the loop
+        fotoCounter.isVisible = false
+        return photoUris
     }
 
-    // Barcode-Scanner umschalten
     private fun toggleBarcodeScanner() {
-        if (barcodeView.visibility == View.VISIBLE) {
-            barcodeView.visibility = View.GONE
-            findViewById<Button>(R.id.lightButton).visibility = View.GONE
+        if (barcodeView.isVisible) {
+            barcodeView.isVisible = false
+            findViewById<Button>(R.id.lightButton).isVisible = false
         } else {
-            barcodeView.visibility = View.VISIBLE
-            findViewById<Button>(R.id.lightButton).visibility = View.VISIBLE
+            barcodeView.isVisible = true
+            findViewById<Button>(R.id.lightButton).isVisible = true
 
             barcodeView.decodeSingle(object : BarcodeCallback {
                 override fun barcodeResult(result: BarcodeResult) {
-                    barcodeView.visibility = View.GONE
-                    findViewById<Button>(R.id.lightButton).visibility = View.GONE
+                    barcodeView.isVisible = false
+                    findViewById<Button>(R.id.lightButton).isVisible = false
                     val scannedValue = result.text
                     if (scannedValue.matches(Regex("\\d{5}"))) {
-                        containernummerInput.text = scannedValue
+                        containernummerInput.setText(scannedValue)
                         playBeep()
                         (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager)
                             .hideSoftInputFromWindow(containernummerInput.windowToken, 0)
@@ -365,7 +325,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
         }
     }
 
-    // Setup der Button-Listener für die Eingabetasten
     private fun setupButtonListeners() {
         val buttonIds = listOf(
             R.id.button0, R.id.button5, R.id.button10, R.id.button15,
@@ -383,7 +342,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
         }
     }
 
-    // Behandlung des Klicks auf den "Speichern"-Button
     private fun handleErfassenButtonClick(dbHelper: DatabaseHelper, fahrernummer: String?, fuellmengeInput: TextView) {
         if (containernummerInput.text.isNullOrEmpty() || fuellmengeInput.text.isNullOrEmpty()) {
             showMessageInToolbar("Beide Felder müssen ausgefüllt sein!")
@@ -419,7 +377,6 @@ class ContainerErfassungActivity : AppCompatActivity() {
         }
     }
 
-    // Dialog zum Aktualisieren der Datensätze anzeigen
     private fun showUpdateDialog(
         dbHelper: DatabaseHelper, fahrernummer: String?, containernummer: Int, fuellmenge: Int,
         currentDate: String, currentTime: String, photoUris: MutableList<String>
@@ -450,10 +407,8 @@ class ContainerErfassungActivity : AppCompatActivity() {
         clearFields()
     }
 
-    // Felder leeren
     private fun clearFields() {
-        containernummerInput.text = ""
+        containernummerInput.setText("")
         findViewById<TextView>(R.id.editTextFuellmenge).text = ""
-        // Entfernen: containernummerInput.requestFocus()
     }
 }

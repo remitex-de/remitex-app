@@ -5,22 +5,31 @@ plugins {
 }
 
 android {
+    // Keystore-Properties sicher laden
+    def keystorePropertiesFile = rootProject.file("keystore.properties")
+    def keystoreProperties = new Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
     signingConfigs {
         release {
-            storeFile file("Z:/Software&Treiber/Remitex Container App/remitex.keystore")
-            storePassword "Remitex199"
-            keyAlias "Remitex"
-            keyPassword "Remitex199"
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
         }
     }
 
     namespace 'com.example.remitexapp'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.example.remitexapp"
         minSdk 29
-        targetSdk 34
+        targetSdk 35
         versionCode 19
         versionName "1.6.1"
 
