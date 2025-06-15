@@ -129,7 +129,7 @@ class ExportActivity : AppCompatActivity() {
         // Fotos abrufen und E-Mail senden
         val photoUris = db.getAllPhotoUrisForContainer(this, data)
         uri?.let {
-            db.sendEmailWithAttachments(this, it, photoUris, "c.fluegel@remitex.de")
+            db.sendEmailWithAttachments(this, it, photoUris, BuildConfig.EXPORT_EMAIL)
 
             // Erfolgsmeldung
             showMessageInToolbar("Daten erfolgreich exportiert.")

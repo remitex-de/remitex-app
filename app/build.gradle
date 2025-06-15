@@ -26,12 +26,22 @@ android {
     namespace 'com.example.remitexapp'
     compileSdk 35
 
+    buildFeatures {
+        buildConfig = true
+        compose = true  // war schon da
+    }
+
     defaultConfig {
         applicationId "com.example.remitexapp"
         minSdk 29
         targetSdk 35
         versionCode 19
         versionName "1.6.1"
+
+        // Build-Konstanten für sicherheitsrelevante Werte
+        buildConfigField "String", "EXPORT_EMAIL", '"c.fluegel@remitex.de"'
+        buildConfigField "String", "SUPPORT_EMAIL", '"info@remitex.de"'
+        buildConfigField "boolean", "DEBUG_MODE", "false"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

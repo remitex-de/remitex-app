@@ -9,6 +9,8 @@ import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.util.isEmpty
+import androidx.core.util.size
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -53,11 +55,11 @@ class ReExportActivity : AppCompatActivity() {
     private fun handleExportAndSend(data: List<Array<String>>) {
         // Ausgewählte Datensätze erneut exportieren und senden
         val selectedItems = list.checkedItemPositions
-        if (selectedItems.size() == 0) {
+        if (selectedItems.isEmpty()) {
             showMessageInToolbar("Bitte wählen Sie Elemente in der Liste aus")
         } else {
             val selectedData = mutableListOf<Array<String>>()
-            for (i in 0 until selectedItems.size()) {
+            for (i in 0 until selectedItems.size) {
                 if (selectedItems.valueAt(i)) {
                     // Verwende die Originaldaten mit dem Index aus der Auswahl
                     selectedData.add(data[selectedItems.keyAt(i)])
@@ -69,7 +71,7 @@ class ReExportActivity : AppCompatActivity() {
             } ?: showMessageInToolbar("Fehler beim Exportieren der Daten.")
             val photoUris = db.getAllPhotoUrisForContainer(this, selectedData)
             uri?.let {
-                db.sendEmailWithAttachments(this, it, photoUris, "c.fluegel@remitex.de")
+                db.sendEmailWithAttachments(this, it, photoUris, BuildConfig.EXPORT_EMAIL)
             }
         }
     }

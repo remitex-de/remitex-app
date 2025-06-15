@@ -13,3 +13,11 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Keystore-Passwörter (Sicherheit)
+keystore.properties
+*.keystore
+*.jks
+
+# Build-Outputs
+/app/release/
